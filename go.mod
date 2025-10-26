@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.9
+	github.com/invopop/validation v0.8.0
 	github.com/joho/godotenv v1.5.1
 	github.com/xuri/excelize/v2 v2.10.0
 )

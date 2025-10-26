@@ -32,7 +32,7 @@ func main() {
 	app.Use(middleware.ConfigureCORS(cfg.CORS.AllowOrigins))
 
 	// Setup routes
-	router.SetupRoutes(app, container.TransactionHandler)
+	router.SetupRoutes(app, container.TransactionHandler, container.MeetingHandler)
 
 	// Start server
 	fmt.Printf("🚀 Server running on port %s\n", cfg.Server.Port)

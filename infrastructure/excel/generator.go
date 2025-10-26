@@ -3,6 +3,7 @@ package excel
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -119,6 +120,7 @@ func (g *Generator) generateTableHeader(sheetName string) error {
 		Alignment: &excelize.Alignment{
 			Horizontal: "center",
 			Vertical:   "center",
+			WrapText:   true,
 		},
 		Font: &excelize.Font{
 			Bold:   true,
@@ -150,21 +152,21 @@ func (g *Generator) generateTableHeader(sheetName string) error {
 		return err
 	}
 
-	if err := g.file.SetCellValue(sheetName, "C8", "Employee ID"); err != nil {
+	if err := g.file.SetCellValue(sheetName, "C8", "NIP"); err != nil {
 		return err
 	}
 	if err := g.file.MergeCell(sheetName, "C8", "C10"); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellValue(sheetName, "D8", "Position"); err != nil {
+	if err := g.file.SetCellValue(sheetName, "D8", "Jabatan"); err != nil {
 		return err
 	}
 	if err := g.file.MergeCell(sheetName, "D8", "D10"); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellValue(sheetName, "E8", "Rank"); err != nil {
+	if err := g.file.SetCellValue(sheetName, "E8", "Gol"); err != nil {
 		return err
 	}
 	if err := g.file.MergeCell(sheetName, "E8", "E10"); err != nil {
@@ -215,23 +217,23 @@ func (g *Generator) generateTableHeader(sheetName string) error {
 		return err
 	}
 
-	if err := g.file.SetCellValue(sheetName, "U8", "Jumlah Dibayarkan (Rp)"); err != nil {
-		return err
+	if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
+		if err := g.file.SetCellValue(sheetName, "U8", "Jumlah SPJ Rampung (Rp)"); err != nil {
+			return err
+		}
+		if err := g.file.SetCellValue(sheetName, "V8", "Jumlah SPJ Uang Muka (Rp)"); err != nil {
+			return err
+		}
+		if err := g.file.SetCellValue(sheetName, "W8", "Jumlah Dibayarkan (Rp)"); err != nil {
+			return err
+		}
+	} else {
+		if err := g.file.SetCellValue(sheetName, "U8", "Jumlah Dibayarkan (Rp)"); err != nil {
+			return err
+		}
 	}
 
-	if sheetName == "KW RAMPUNG" {
-		if err := g.file.SetCellValue(sheetName, "Y8", "Jumlah SPJ Rampung (Rp)"); err != nil {
-			return err
-		}
-		if err := g.file.SetCellValue(sheetName, "Z8", "Jumlah SPJ Uang Muka (Rp)"); err != nil {
-			return err
-		}
-		if err := g.file.SetCellValue(sheetName, "AA8", "Jumlah Dibayarkan (Rp)"); err != nil {
-			return err
-		}
-	}
-
-	if err := g.file.SetCellValue(sheetName, "V8", "No SPD"); err != nil {
+	if err := g.file.SetCellValue(sheetName, "AA8", "No SPD"); err != nil {
 		return err
 	}
 
@@ -322,7 +324,17 @@ func (g *Generator) generateTableHeader(sheetName string) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A8", "V10", headerStyle); err != nil {
+	if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
+		if err := g.file.MergeCell(sheetName, "W8", "W10"); err != nil {
+			return err
+		}
+
+		if err := g.file.MergeCell(sheetName, "V8", "V10"); err != nil {
+			return err
+		}
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A8", "W10", headerStyle); err != nil {
 		return err
 	}
 	return nil
@@ -361,7 +373,8 @@ type PersonRecap struct {
 }
 
 func (g *Generator) generateTableData(sheetName string, assignees []dto.AssigneeDTO, currentRow int) (int, error) {
-	dataStyle, err := g.file.NewStyle(&excelize.Style{
+	// Style for text data
+	textStyle, err := g.file.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{
 			Vertical: "center",
 		},
@@ -375,6 +388,27 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 			{Type: "bottom", Color: "000000", Style: 1},
 			{Type: "right", Color: "000000", Style: 1},
 		},
+	})
+	if err != nil {
+		return currentRow, err
+	}
+
+	// Style for numeric data with thousand separator
+	numberStyle, err := g.file.NewStyle(&excelize.Style{
+		Alignment: &excelize.Alignment{
+			Vertical: "center",
+		},
+		Font: &excelize.Font{
+			Size:   10,
+			Family: "Tahoma",
+		},
+		Border: []excelize.Border{
+			{Type: "left", Color: "000000", Style: 1},
+			{Type: "top", Color: "000000", Style: 1},
+			{Type: "bottom", Color: "000000", Style: 1},
+			{Type: "right", Color: "000000", Style: 1},
+		},
+		NumFmt: 3, // Indonesian thousand separator format (#,##0)
 	})
 	if err != nil {
 		return currentRow, err
@@ -463,6 +497,7 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 
 	personNo := 1
 	for _, data := range personData {
+		// Text columns
 		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("A%d", currentRow), personNo); err != nil {
 			return currentRow, err
 		}
@@ -484,10 +519,15 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("G%d", currentRow), data.Tanggal); err != nil {
 			return currentRow, err
 		}
-		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("H%d", currentRow), data.UMUangHarianJmlHari); err != nil {
+		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("I%d", currentRow), "Hari"); err != nil {
 			return currentRow, err
 		}
-		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("I%d", currentRow), "Hari"); err != nil {
+		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("M%d", currentRow), "Hari"); err != nil {
+			return currentRow, err
+		}
+
+		// Numeric columns with thousand separator
+		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("H%d", currentRow), data.UMUangHarianJmlHari); err != nil {
 			return currentRow, err
 		}
 		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("J%d", currentRow), data.UMUangHarianPerhari); err != nil {
@@ -497,9 +537,6 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 			return currentRow, err
 		}
 		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("L%d", currentRow), data.UMPenginapanJmlHari); err != nil {
-			return currentRow, err
-		}
-		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("M%d", currentRow), "Hari"); err != nil {
 			return currentRow, err
 		}
 		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("N%d", currentRow), data.UMPenginapanPerhari); err != nil {
@@ -513,6 +550,7 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 		}
 
 		if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
+			// Numeric columns for REKAP RAMPUNG sheet
 			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("Q%d", currentRow), data.RTransportTiketPesawat); err != nil {
 				return currentRow, err
 			}
@@ -525,28 +563,78 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("T%d", currentRow), data.RTransportDarat); err != nil {
 				return currentRow, err
 			}
-		} else {
-			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("Q%d", currentRow), "-"); err != nil {
-				return currentRow, err
-			}
-			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("R%d", currentRow), "-"); err != nil {
-				return currentRow, err
-			}
-			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("S%d", currentRow), "-"); err != nil {
-				return currentRow, err
-			}
 		}
+
+		// Formula for transport total
 		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("T%d", currentRow), fmt.Sprintf("=P%d+Q%d+R%d+S%d", currentRow, currentRow, currentRow, currentRow)); err != nil {
 			return currentRow, err
 		}
-		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("U%d", currentRow), data.UMTotalDibayarkan); err != nil {
+
+		if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
+			// Formulas for REKAP RAMPUNG sheet
+			if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("U%d", currentRow), fmt.Sprintf("=T%d+O%d+K%d", currentRow, currentRow, currentRow)); err != nil {
+				return currentRow, err
+			}
+			if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("V%d", currentRow), fmt.Sprintf("='PEMANTAUAN REKAP UANG MUKA'!U%d", currentRow)); err != nil {
+				return currentRow, err
+			}
+			if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("W%d", currentRow), fmt.Sprintf("=U%d-V%d", currentRow, currentRow)); err != nil {
+				return currentRow, err
+			}
+		} else {
+			// Total amount for UANG MUKA sheet
+			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("U%d", currentRow), data.UMTotalDibayarkan); err != nil {
+				return currentRow, err
+			}
+		}
+
+		// SPD number (text column)
+		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("AA%d", currentRow), data.NoSpd); err != nil {
 			return currentRow, err
 		}
-		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("V%d", currentRow), data.NoSpd); err != nil {
-			return currentRow, err
-		}
-		if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("A%d", currentRow), fmt.Sprintf("V%d", currentRow), dataStyle); err != nil {
-			return currentRow, err
+
+		// Apply styles - text columns get textStyle, numeric columns get numberStyle
+		if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
+			// Apply text style to text columns (A-G, I, M, AA)
+			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("A%d", currentRow), fmt.Sprintf("G%d", currentRow), textStyle); err != nil {
+				return currentRow, err
+			}
+			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("I%d", currentRow), fmt.Sprintf("I%d", currentRow), textStyle); err != nil {
+				return currentRow, err
+			}
+			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("M%d", currentRow), fmt.Sprintf("M%d", currentRow), textStyle); err != nil {
+				return currentRow, err
+			}
+			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("AA%d", currentRow), fmt.Sprintf("AA%d", currentRow), textStyle); err != nil {
+				return currentRow, err
+			}
+
+			// Apply number style to numeric columns (H, J, K, L, N, O, P, Q, R, S, T, U, V, W)
+			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("H%d", currentRow), fmt.Sprintf("W%d", currentRow), numberStyle); err != nil {
+				return currentRow, err
+			}
+		} else {
+			// Apply text style to text columns (A-G, I, M, AA)
+			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("A%d", currentRow), fmt.Sprintf("G%d", currentRow), textStyle); err != nil {
+				return currentRow, err
+			}
+			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("I%d", currentRow), fmt.Sprintf("I%d", currentRow), textStyle); err != nil {
+				return currentRow, err
+			}
+			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("M%d", currentRow), fmt.Sprintf("M%d", currentRow), textStyle); err != nil {
+				return currentRow, err
+			}
+			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("AA%d", currentRow), fmt.Sprintf("AA%d", currentRow), textStyle); err != nil {
+				return currentRow, err
+			}
+
+			// Apply number style to numeric columns (H, J, K, L, N, O, P, T, U)
+			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("H%d", currentRow), fmt.Sprintf("P%d", currentRow), numberStyle); err != nil {
+				return currentRow, err
+			}
+			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("T%d", currentRow), fmt.Sprintf("U%d", currentRow), numberStyle); err != nil {
+				return currentRow, err
+			}
 		}
 
 		currentRow++
@@ -556,7 +644,7 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 }
 
 func (g *Generator) generateSummaryRow(sheetName string, currentRow int) error {
-	summaryStyle, err := g.file.NewStyle(&excelize.Style{
+	summaryStyle, _ := g.file.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{
 			Horizontal: "right",
 			Vertical:   "center",
@@ -572,31 +660,139 @@ func (g *Generator) generateSummaryRow(sheetName string, currentRow int) error {
 			{Type: "bottom", Color: "000000", Style: 1},
 			{Type: "right", Color: "000000", Style: 1},
 		},
+		NumFmt: 3,
+	})
+
+	summaryNumberStyle, err := g.file.NewStyle(&excelize.Style{
+		Alignment: &excelize.Alignment{
+			Horizontal: "right",
+			Vertical:   "center",
+		},
+		Font: &excelize.Font{
+			Bold:   true,
+			Size:   10,
+			Family: "Tahoma",
+		},
+		Border: []excelize.Border{
+			{Type: "left", Color: "000000", Style: 1},
+			{Type: "top", Color: "000000", Style: 1},
+			{Type: "bottom", Color: "000000", Style: 1},
+			{Type: "right", Color: "000000", Style: 1},
+		},
+		NumFmt: 3, // Indonesian thousand separator format (#,##0)
 	})
 	if err != nil {
 		return err
 	}
 
 	totalRow := currentRow
-	if err := g.file.SetCellValue(sheetName, fmt.Sprintf("B%d", totalRow), "JUMLAH"); err != nil {
-		return err
+
+	if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
+		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("B%d", totalRow+1), "JUMLAH SPJ RAMPUNG"); err != nil {
+			return err
+		}
+
+		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("B%d", totalRow+2), "JUMLAH SPJ UANG MUKA"); err != nil {
+			return err
+		}
+
+		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("B%d", totalRow+3), "JUMLAH DIBAYARKAN"); err != nil {
+			return err
+		}
+
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("K%d", totalRow+1), fmt.Sprintf("=SUM(K11:K%d)", totalRow-1)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("O%d", totalRow+1), fmt.Sprintf("=SUM(O11:O%d)", totalRow-1)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("P%d", totalRow+1), fmt.Sprintf("=SUM(P11:P%d)", totalRow-1)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("Q%d", totalRow+1), fmt.Sprintf("=SUM(Q11:Q%d)", totalRow-1)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("R%d", totalRow+1), fmt.Sprintf("=SUM(R11:R%d)", totalRow-1)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("S%d", totalRow+1), fmt.Sprintf("=SUM(S11:S%d)", totalRow-1)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("T%d", totalRow+1), fmt.Sprintf("=SUM(T11:T%d)", totalRow-1)); err != nil {
+			return err
+		}
+
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("U%d", totalRow+1), fmt.Sprintf("=SUM(U11:U%d)", totalRow-1)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("V%d", totalRow+2), fmt.Sprintf("=SUM(V11:V%d)", totalRow-1)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("W%d", totalRow+3), fmt.Sprintf("=SUM(W11:W%d)", totalRow-1)); err != nil {
+			return err
+		}
+
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("O%d", totalRow+2), fmt.Sprintf("=SUM(O11:O%d)", totalRow-1)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("P%d", totalRow+2), fmt.Sprintf("=SUM(P11:P%d)", totalRow-1)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("T%d", totalRow+2), fmt.Sprintf("=SUM(T11:T%d)", totalRow-1)); err != nil {
+			return err
+		}
+
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("J%d", totalRow+3), fmt.Sprintf("=J%d-J%d", totalRow+1, totalRow+2)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("O%d", totalRow+3), fmt.Sprintf("=O%d-O%d", totalRow+1, totalRow+2)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("P%d", totalRow+3), fmt.Sprintf("=P%d-P%d", totalRow+1, totalRow+2)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("Q%d", totalRow+3), fmt.Sprintf("=Q%d-Q%d", totalRow+1, totalRow+2)); err != nil {
+			return err
+		}
+
+		if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("A%d", totalRow), fmt.Sprintf("W%d", totalRow+3), summaryStyle); err != nil {
+			return err
+		}
+
+		if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("J%d", totalRow+1), fmt.Sprintf("W%d", totalRow+3), summaryNumberStyle); err != nil {
+			return err
+		}
+
+		if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("B%d", totalRow+1), fmt.Sprintf("B%d", totalRow+3), g.dynamicStyle([]string{"top", "right", "bottom", "left"}, true, false, 1, "left")); err != nil {
+			return err
+		}
+	} else {
+		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("B%d", totalRow), "JUMLAH"); err != nil {
+			return err
+		}
+
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("K%d", totalRow), fmt.Sprintf("=SUM(K11:K%d)", totalRow-1)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("O%d", totalRow), fmt.Sprintf("=SUM(O11:O%d)", totalRow-1)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("T%d", totalRow), fmt.Sprintf("=SUM(T11:T%d)", totalRow-1)); err != nil {
+			return err
+		}
+		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("U%d", totalRow), fmt.Sprintf("=SUM(U11:U%d)", totalRow-1)); err != nil {
+			return err
+		}
+
+		if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("A%d", totalRow), fmt.Sprintf("U%d", totalRow), summaryStyle); err != nil {
+			return err
+		}
+
+		if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("K%d", totalRow), fmt.Sprintf("U%d", totalRow), summaryNumberStyle); err != nil {
+			return err
+		}
 	}
 
-	if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("J%d", totalRow), fmt.Sprintf("=SUM(J10:J%d)", currentRow-1)); err != nil {
-		return err
-	}
-	if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("N%d", totalRow), fmt.Sprintf("=SUM(N10:N%d)", currentRow-1)); err != nil {
-		return err
-	}
-	if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("T%d", totalRow), fmt.Sprintf("=SUM(T10:T%d)", currentRow-1)); err != nil {
-		return err
-	}
-	if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("U%d", totalRow), fmt.Sprintf("=SUM(U10:Y%d)", currentRow-1)); err != nil {
-		return err
-	}
-	if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("A%d", totalRow), fmt.Sprintf("V%d", totalRow), summaryStyle); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -612,17 +808,10 @@ func (g *Generator) generateSignatureRow(sheetName string, currentRow int) error
 		},
 	})
 
-	dataStyle, _ := g.file.NewStyle(&excelize.Style{
-		Alignment: &excelize.Alignment{
-			Vertical: "center",
-		},
-		Font: &excelize.Font{
-			Size:   10,
-			Family: "Tahoma",
-		},
-	})
-
 	totalRow := currentRow + 3
+	if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
+		totalRow += 3
+	}
 	if err := g.file.SetCellValue(sheetName, fmt.Sprintf("B%d", totalRow), "Mengetahui/Menyetujui"); err != nil {
 		return err
 	}
@@ -674,14 +863,17 @@ func (g *Generator) generateSignatureRow(sheetName string, currentRow int) error
 		return err
 	}
 
-	err := g.file.SetCellStyle(sheetName, fmt.Sprintf("B%d", currentRow+2), fmt.Sprintf("L%d", totalRow), dataStyle)
-	if err != nil {
-		return err
-	}
-
-	err = g.file.SetCellStyle(sheetName, fmt.Sprintf("B%d", totalRow-1), fmt.Sprintf("L%d", totalRow-1), nameStyle)
-	if err != nil {
-		return err
+	log.Println("totalrow", totalRow)
+	if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
+		err := g.file.SetCellStyle(sheetName, fmt.Sprintf("B%d", totalRow), fmt.Sprintf("L%d", totalRow), nameStyle)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := g.file.SetCellStyle(sheetName, fmt.Sprintf("B%d", totalRow), fmt.Sprintf("L%d", totalRow), nameStyle)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -802,6 +994,18 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		},
 	})
 
+	// Style for currency with thousand separator
+	currencyStyle, _ := g.file.NewStyle(&excelize.Style{
+		Alignment: &excelize.Alignment{
+			Vertical: "center",
+		},
+		Font: &excelize.Font{
+			Size:   10,
+			Family: "Tahoma",
+		},
+		NumFmt: 3, // Indonesian thousand separator format (#,##0)
+	})
+
 	if err := g.file.SetCellValue(sheetName, "M1", "Tahun Anggaran"); err != nil {
 		return err
 	}
@@ -857,7 +1061,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if err := g.file.SetCellValue(sheetName, "F7", ":"); err != nil {
 		return err
 	}
-	if err := g.file.SetCellFormula(sheetName, "G7", "=VLOOKUP($T$1,'PEMANTAUAN REKAP UANG MUKA'!$A$11:$AJ$100,22,FALSE)"); err != nil {
+	if err := g.file.SetCellFormula(sheetName, "G7", "=VLOOKUP($T$1,'PEMANTAUAN REKAP UANG MUKA'!$A$11:$AA$100,27,FALSE)"); err != nil {
 		return err
 	}
 
@@ -1021,6 +1225,10 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
+	if err := g.file.SetCellStyle(sheetName, "M14", "M14", currencyStyle); err != nil {
+		return err
+	}
+
 	if err := g.file.SetCellValue(sheetName, "A15", "2"); err != nil {
 		return err
 	}
@@ -1043,6 +1251,10 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
+	if err := g.file.SetCellStyle(sheetName, "M17", "M17", currencyStyle); err != nil {
+		return err
+	}
+
 	if err := g.file.SetCellValue(sheetName, "C18", "b."); err != nil {
 		return err
 	}
@@ -1059,6 +1271,10 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
+	if err := g.file.SetCellStyle(sheetName, "M19", "M19", currencyStyle); err != nil {
+		return err
+	}
+
 	if err := g.file.SetCellValue(sheetName, "D20", fmt.Sprintf("Transport Dareah %s (PP)", req.DestinationCity)); err != nil {
 		return err
 	}
@@ -1066,6 +1282,10 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 	if err := g.file.SetCellFormula(sheetName, "M20", "=VLOOKUP($T$1,'PEMANTAUAN REKAP UANG MUKA'!$A$11:$AC$100,18,FALSE)"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "M20", "M20", currencyStyle); err != nil {
 		return err
 	}
 
@@ -1093,6 +1313,10 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if err := g.file.SetCellFormula(sheetName, "H22", "=VLOOKUP($T$1,'PEMANTAUAN REKAP UANG MUKA'!$A$11:$AC$100,14,FALSE)"); err != nil {
 		return err
 	}
+
+	if err := g.file.SetCellStyle(sheetName, "H22", "H22", currencyStyle); err != nil {
+		return err
+	}
 	if err := g.file.SetCellValue(sheetName, "L22", "Rp."); err != nil {
 		return err
 	}
@@ -1100,65 +1324,20 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	dynamicStyle := func(borderTypes []string, bold bool, italic bool, borderStyle int, horizontal string) int {
-		var borders []excelize.Border
-
-		for _, side := range borderTypes {
-			switch side {
-			case "top":
-				borders = append(borders, excelize.Border{
-					Type:  "top",
-					Color: "000000",
-					Style: borderStyle,
-				})
-			case "bottom":
-				borders = append(borders, excelize.Border{
-					Type:  "bottom",
-					Color: "000000",
-					Style: borderStyle,
-				})
-			case "left":
-				borders = append(borders, excelize.Border{
-					Type:  "left",
-					Color: "000000",
-					Style: borderStyle,
-				})
-			case "right":
-				borders = append(borders, excelize.Border{
-					Type:  "right",
-					Color: "000000",
-					Style: borderStyle,
-				})
-			}
-		}
-
-		style, _ := g.file.NewStyle(&excelize.Style{
-			Alignment: &excelize.Alignment{
-				Horizontal: horizontal,
-				Vertical:   "center",
-			},
-			Font: &excelize.Font{
-				Italic: italic,
-				Bold:   bold,
-				Size:   10,
-				Family: "Tahoma",
-			},
-			Border: borders,
-		})
-
-		return style
-	}
-
-	if err := g.file.SetCellStyle(sheetName, "C12", "C24", dynamicStyle([]string{"left"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "M22", "M22", currencyStyle); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "L12", "L24", dynamicStyle([]string{"left"}, false, false, 2, "left")); err != nil {
+
+	if err := g.file.SetCellStyle(sheetName, "C12", "C24", g.dynamicStyle([]string{"left"}, false, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "O12", "O24", dynamicStyle([]string{"left"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "L12", "L24", g.dynamicStyle([]string{"left"}, false, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "S12", "S24", dynamicStyle([]string{"right"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "O12", "O24", g.dynamicStyle([]string{"left"}, false, false, 2, "left")); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "S12", "S24", g.dynamicStyle([]string{"right"}, false, false, 2, "left")); err != nil {
 		return err
 	}
 
@@ -1195,25 +1374,25 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if err := g.file.SetCellStyle(sheetName, "C24", "C24", kwHeaderStyle); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A24", "B24", dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A24", "B24", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "D24", "K24", dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "D24", "K24", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "M24", "N24", dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "M24", "N24", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "L24", "L24", dynamicStyle([]string{"top", "bottom", "left"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "L24", "L24", g.dynamicStyle([]string{"top", "bottom", "left"}, false, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "P24", "R24", dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "P24", "R24", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "O24", "O24", dynamicStyle([]string{"top", "bottom", "left"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "O24", "O24", g.dynamicStyle([]string{"top", "bottom", "left"}, false, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "S24", "S24", dynamicStyle([]string{"top", "bottom", "right"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "S24", "S24", g.dynamicStyle([]string{"top", "bottom", "right"}, false, false, 2, "left")); err != nil {
 		return err
 	}
 
@@ -1224,11 +1403,15 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "M24", "M24", dynamicStyle([]string{"top", "bottom"}, true, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "M24", "M24", currencyStyle); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "L24", "L24", dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "M24", "M24", g.dynamicStyle([]string{"top", "bottom"}, true, false, 2, "left")); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "L24", "L24", g.dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "left")); err != nil {
 		return err
 	}
 
@@ -1236,7 +1419,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A25", "A25", dynamicStyle([]string{}, false, true, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A25", "A25", g.dynamicStyle([]string{}, false, true, 2, "left")); err != nil {
 		return err
 	}
 
@@ -1312,27 +1495,27 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A28", "S35", dynamicStyle([]string{}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A28", "S35", g.dynamicStyle([]string{}, false, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A28", "S35", dynamicStyle([]string{}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A28", "S35", g.dynamicStyle([]string{}, false, false, 2, "left")); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A29", "C29", dynamicStyle([]string{}, true, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A29", "C29", g.dynamicStyle([]string{}, true, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "O29", "O29", dynamicStyle([]string{}, true, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "O29", "O29", g.dynamicStyle([]string{}, true, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A35", "S35", dynamicStyle([]string{"bottom"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A35", "S35", g.dynamicStyle([]string{"bottom"}, false, false, 2, "left")); err != nil {
 		return err
 	}
 
 	if err := g.file.SetCellValue(sheetName, "A36", "PERHITUNGAN SPD UANG MUKA"); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A36", "A36", dynamicStyle([]string{}, true, false, 0, "center")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A36", "A36", g.dynamicStyle([]string{}, true, false, 0, "center")); err != nil {
 		return err
 	}
 
@@ -1389,7 +1572,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A37", "L40", dynamicStyle([]string{}, true, false, 0, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A37", "L40", g.dynamicStyle([]string{}, true, false, 0, "left")); err != nil {
 		return err
 	}
 
@@ -1412,7 +1595,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A50", "S50", dynamicStyle([]string{"bottom"}, false, false, 8, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A50", "S50", g.dynamicStyle([]string{"bottom"}, false, false, 8, "left")); err != nil {
 		return err
 	}
 
@@ -1424,7 +1607,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A53", "A53", dynamicStyle([]string{}, true, false, 0, "center")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A53", "A53", g.dynamicStyle([]string{}, true, false, 0, "center")); err != nil {
 		return err
 	}
 
@@ -1495,14 +1678,14 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A67", "S67", dynamicStyle([]string{"top", "right", "bottom", "left"}, true, false, 2, "center")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A67", "S67", g.dynamicStyle([]string{"top", "right", "bottom", "left"}, true, false, 2, "center")); err != nil {
 		return err
 	}
 
 	if err := g.file.SetCellValue(sheetName, "B69", "1"); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "B69", "B69", dynamicStyle([]string{}, false, false, 0, "center")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "B69", "B69", g.dynamicStyle([]string{}, false, false, 0, "center")); err != nil {
 		return err
 	}
 	if err := g.file.SetCellValue(sheetName, "D69", "Transport :"); err != nil {
@@ -1517,7 +1700,20 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if err := g.file.SetCellValue(sheetName, "O70", "Rp."); err != nil {
 		return err
 	}
+	if err := g.file.SetCellFormula(sheetName, "O70", "=D19"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "O70", "O70", currencyStyle); err != nil {
+		return err
+	}
+
 	if err := g.file.SetCellValue(sheetName, "O71", "Rp."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "O71", "=D20"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "O71", "O71", currencyStyle); err != nil {
 		return err
 	}
 	if err := g.file.SetCellValue(sheetName, "D74", "JUMLAH"); err != nil {
@@ -1529,25 +1725,30 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if err := g.file.MergeCell(sheetName, "D74", "N74"); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "D68", "D73", dynamicStyle([]string{"left"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "D68", "D73", g.dynamicStyle([]string{"left"}, false, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "O68", "O73", dynamicStyle([]string{"left"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "O68", "O73", g.dynamicStyle([]string{"left"}, false, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "S68", "S73", dynamicStyle([]string{"right"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "S68", "S73", g.dynamicStyle([]string{"right"}, false, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A74", "S74", dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A74", "S74", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "D74", "D74", dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "center")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "D74", "D74", g.dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "center")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "O74", "O74", dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "O74", "O74", g.dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "left")); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "S74", "S74", dynamicStyle([]string{"top", "bottom", "right"}, false, false, 2, "left")); err != nil {
+
+	// Apply currency style to O74
+	if err := g.file.SetCellStyle(sheetName, "O74", "O74", currencyStyle); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "S74", "S74", g.dynamicStyle([]string{"top", "bottom", "right"}, false, false, 2, "left")); err != nil {
 		return err
 	}
 
@@ -1596,7 +1797,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if err := g.file.SetCellValue(sheetName, "O90", expenditureTreasurerId); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A89", "S89", dynamicStyle([]string{}, true, false, 0, "left")); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A89", "S89", g.dynamicStyle([]string{}, true, false, 0, "left")); err != nil {
 		return err
 	}
 
@@ -1681,6 +1882,12 @@ func (g *Generator) GenerateRecapExcel(req dto.RecapReportDTO) (*bytes.Buffer, e
 		return nil, err
 	}
 
+	kwRampung := "KW RAMPUNG"
+	err = g.generateKw(kwRampung, req)
+	if err != nil {
+		return nil, err
+	}
+
 	// Save the Excel file to a buffer
 	var b bytes.Buffer
 	if err = g.file.Write(&b); err != nil {
@@ -1688,6 +1895,55 @@ func (g *Generator) GenerateRecapExcel(req dto.RecapReportDTO) (*bytes.Buffer, e
 	}
 
 	return &b, nil
+}
+
+func (g *Generator) dynamicStyle(borderTypes []string, bold bool, italic bool, borderStyle int, horizontal string) int {
+	var borders []excelize.Border
+
+	for _, side := range borderTypes {
+		switch side {
+		case "top":
+			borders = append(borders, excelize.Border{
+				Type:  "top",
+				Color: "000000",
+				Style: borderStyle,
+			})
+		case "bottom":
+			borders = append(borders, excelize.Border{
+				Type:  "bottom",
+				Color: "000000",
+				Style: borderStyle,
+			})
+		case "left":
+			borders = append(borders, excelize.Border{
+				Type:  "left",
+				Color: "000000",
+				Style: borderStyle,
+			})
+		case "right":
+			borders = append(borders, excelize.Border{
+				Type:  "right",
+				Color: "000000",
+				Style: borderStyle,
+			})
+		}
+	}
+
+	style, _ := g.file.NewStyle(&excelize.Style{
+		Alignment: &excelize.Alignment{
+			Horizontal: horizontal,
+			Vertical:   "center",
+		},
+		Font: &excelize.Font{
+			Italic: italic,
+			Bold:   bold,
+			Size:   10,
+			Family: "Tahoma",
+		},
+		Border: borders,
+	})
+
+	return style
 }
 
 var angka = []string{

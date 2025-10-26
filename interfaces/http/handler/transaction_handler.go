@@ -96,9 +96,11 @@ func (h *TransactionHandler) GenerateRecapExcel(c *fiber.Ctx) error {
 		})
 	}
 
-	if len(reqBody.Assignees) == 0 {
+	// Validate request using DTO validation method
+	if err := reqBody.Validate(); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "No assignees provided for Excel generation",
+			"error":   "Validation failed",
+			"details": err.Error(),
 		})
 	}
 

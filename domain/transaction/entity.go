@@ -1,7 +1,6 @@
 package transaction
 
 import (
-	"errors"
 	"strings"
 )
 
@@ -29,20 +28,9 @@ type Transaction struct {
 	Rank            string
 }
 
-// NewTransaction creates a new transaction with validation
+// NewTransaction creates a new transaction (validation is handled in handler layer)
 func NewTransaction(name, txType, subtype string, amount, subtotal int32, totalNight *int32, description string, transportDetail string, employeeID, position, rank string) (*Transaction, error) {
-	if strings.TrimSpace(name) == "" {
-		return nil, errors.New("name cannot be empty")
-	}
-
-	if amount < 0 {
-		return nil, errors.New("amount cannot be negative")
-	}
-
-	if subtotal < 0 {
-		return nil, errors.New("subtotal cannot be negative")
-	}
-
+	// Normalize transaction type - this is business logic, not validation
 	validType := TransactionType(strings.ToLower(txType))
 	if !isValidTransactionType(validType) {
 		validType = TransactionTypeOther

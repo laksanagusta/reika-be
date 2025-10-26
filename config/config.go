@@ -9,9 +9,12 @@ import (
 
 // Config holds all application configuration
 type Config struct {
-	Server ServerConfig
-	Gemini GeminiConfig
-	CORS   CORSConfig
+	Server      ServerConfig
+	Gemini      GeminiConfig
+	Zoom        ZoomConfig
+	Drive       DriveConfig
+	Notification NotificationConfig
+	CORS        CORSConfig
 }
 
 // ServerConfig holds server-related configuration
@@ -21,6 +24,22 @@ type ServerConfig struct {
 
 // GeminiConfig holds Gemini API configuration
 type GeminiConfig struct {
+	APIKey string
+}
+
+// ZoomConfig holds Zoom API configuration
+type ZoomConfig struct {
+	APIKey    string
+	APISecret string
+}
+
+// DriveConfig holds Google Drive API configuration
+type DriveConfig struct {
+	APIKey string
+}
+
+// NotificationConfig holds notification service configuration
+type NotificationConfig struct {
 	APIKey string
 }
 
@@ -41,6 +60,16 @@ func Load() (*Config, error) {
 		Gemini: GeminiConfig{
 			APIKey: os.Getenv("GEMINI_API_KEY"),
 		},
+		Zoom: ZoomConfig{
+			APIKey:    os.Getenv("ZOOM_API_KEY"),
+			APISecret: os.Getenv("ZOOM_API_SECRET"),
+		},
+		Drive: DriveConfig{
+			APIKey: os.Getenv("GOOGLE_DRIVE_API_KEY"),
+		},
+		Notification: NotificationConfig{
+			APIKey: os.Getenv("NOTIFICATION_API_KEY"),
+		},
 		CORS: CORSConfig{
 			AllowOrigins: getEnv("CORS_ALLOW_ORIGINS", "http://localhost:3000"),
 		},
@@ -57,6 +86,12 @@ func Load() (*Config, error) {
 func (c *Config) Validate() error {
 	if c.Gemini.APIKey == "" {
 		return errors.New("GEMINI_API_KEY environment variable is required")
+	}
+
+	// Optional validation for meeting functionality
+	if c.Zoom.APIKey == "" {
+		// Log warning but don't fail - Zoom functionality won't work
+		// In production, you might want to make this required
 	}
 
 	return nil
