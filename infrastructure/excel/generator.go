@@ -150,21 +150,21 @@ func (g *Generator) generateTableHeader(sheetName string) error {
 		return err
 	}
 
-	if err := g.file.SetCellValue(sheetName, "C8", "NIP"); err != nil {
+	if err := g.file.SetCellValue(sheetName, "C8", "Employee ID"); err != nil {
 		return err
 	}
 	if err := g.file.MergeCell(sheetName, "C8", "C10"); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellValue(sheetName, "D8", "Jabatan"); err != nil {
+	if err := g.file.SetCellValue(sheetName, "D8", "Position"); err != nil {
 		return err
 	}
 	if err := g.file.MergeCell(sheetName, "D8", "D10"); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellValue(sheetName, "E8", "Gol"); err != nil {
+	if err := g.file.SetCellValue(sheetName, "E8", "Rank"); err != nil {
 		return err
 	}
 	if err := g.file.MergeCell(sheetName, "E8", "E10"); err != nil {
@@ -329,6 +329,7 @@ func (g *Generator) generateTableHeader(sheetName string) error {
 }
 
 type PersonRecap struct {
+	Name                    string
 	NIP                     string
 	Jabatan                 string
 	Gol                     string
@@ -359,7 +360,7 @@ type PersonRecap struct {
 	RTotalDibayarkan       int32
 }
 
-func (g *Generator) generateTableData(sheetName string, transactions []dto.TransactionDTO, currentRow int) (int, error) {
+func (g *Generator) generateTableData(sheetName string, assignees []dto.AssigneeDTO, currentRow int) (int, error) {
 	dataStyle, err := g.file.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{
 			Vertical: "center",
@@ -383,86 +384,89 @@ func (g *Generator) generateTableData(sheetName string, transactions []dto.Trans
 	constUangHarianJmlHari := int32(2)
 	constUangHarianPerhari := int32(688000)
 	constUangHarianJumlah := constUangHarianJmlHari * constUangHarianPerhari
-	for _, tx := range transactions {
-		data, exists := personData[tx.Name]
+
+	for _, assignee := range assignees {
+		data, exists := personData[assignee.EmployeeID]
 		if !exists {
 			data = &PersonRecap{
-				NIP:                 "-",
-				Jabatan:             "-",
-				Gol:                 "-",
-				Tujuan:              "-",
-				Tanggal:             "-",
-				NoSpd:               tx.SpdNumber,
+				Name:                assignee.Name,
+				NIP:                 assignee.EmployeeID,
+				Jabatan:             assignee.Position,
+				Gol:                 assignee.Rank,
+				Tujuan:              "-", // To be filled from report DTO or transaction description
+				Tanggal:             "-", // To be filled from report DTO or transaction date
+				NoSpd:               assignee.SpdNumber,
 				UMUangHarianJmlHari: constUangHarianJmlHari,
 				UMUangHarianPerhari: constUangHarianPerhari,
 				UMUangHarianJumlah:  constUangHarianJumlah,
 			}
-			personData[tx.Name] = data
+			personData[assignee.EmployeeID] = data
 		}
 
-		switch transaction.TransactionType(strings.ToLower(tx.Type)) {
-		case transaction.TransactionTypeAccommodation:
-			if tx.PaymentType == "uang_muka" {
-				if tx.TotalNight != nil {
-					data.UMPenginapanJmlHari += *tx.TotalNight
-				}
-				data.UMPenginapanPerhari = tx.Amount // Assuming Amount is per night
-				data.UMPenginapanJumlah += tx.Subtotal
-			} else {
-				if tx.TotalNight != nil {
-					data.RPenginapanJmlHari += *tx.TotalNight
-				}
-				data.RPenginapanPerhari = tx.Amount // Assuming Amount is per night
-				data.RPenginapanJumlah += tx.Subtotal
-			}
-		case transaction.TransactionTypeTransport:
-			if tx.PaymentType == "uang_muka" {
-				if strings.ToLower(tx.Subtype) == "flight" {
-					data.UMTransportTiketPesawat += tx.Subtotal
-				}
-				data.UMTransportJumlah += tx.Subtotal
-			} else {
-				if strings.ToLower(tx.Subtype) == "flight" {
-					if data.UMTransportTiketPesawat == 0 {
-						data.RTransportTiketPesawat += tx.Subtotal
-					} else {
-						data.RTransportTiketPesawat = data.UMTransportTiketPesawat
+		for _, tx := range assignee.Transactions {
+			switch transaction.TransactionType(strings.ToLower(tx.Type)) {
+			case transaction.TransactionTypeAccommodation:
+				if tx.PaymentType == "uang_muka" {
+					if tx.TotalNight != nil {
+						data.UMPenginapanJmlHari += *tx.TotalNight
 					}
+					data.UMPenginapanPerhari = tx.Amount // Assuming Amount is per night
+					data.UMPenginapanJumlah += tx.Subtotal
+				} else {
+					if tx.TotalNight != nil {
+						data.RPenginapanJmlHari += *tx.TotalNight
+					}
+					data.RPenginapanPerhari = tx.Amount // Assuming Amount is per night
+					data.RPenginapanJumlah += tx.Subtotal
 				}
-
-				if strings.ToLower(tx.Subtype) == "taxi" {
-					if strings.ToLower(tx.TransportDetail) == "transport_darat" {
-						data.RTransportDarat += tx.Subtotal
+			case transaction.TransactionTypeTransport:
+				if tx.PaymentType == "uang_muka" {
+					if strings.ToLower(tx.Subtype) == "flight" {
+						data.UMTransportTiketPesawat += tx.Subtotal
+					}
+					data.UMTransportJumlah += tx.Subtotal
+				} else {
+					if strings.ToLower(tx.Subtype) == "flight" {
+						if data.UMTransportTiketPesawat == 0 {
+							data.RTransportTiketPesawat += tx.Subtotal
+						} else {
+							data.RTransportTiketPesawat = data.UMTransportTiketPesawat
+						}
 					}
 
-					if strings.ToLower(tx.TransportDetail) == "transport_asal" {
-						data.RTransportAsal += tx.Subtotal
-					}
+					if strings.ToLower(tx.Subtype) == "taxi" {
+						if strings.ToLower(tx.TransportDetail) == "transport_darat" {
+							data.RTransportDarat += tx.Subtotal
+						}
 
-					if strings.ToLower(tx.TransportDetail) == "transport_daerah" {
-						data.RTransportDaerah += tx.Subtotal
+						if strings.ToLower(tx.TransportDetail) == "transport_asal" {
+							data.RTransportAsal += tx.Subtotal
+						}
+
+						if strings.ToLower(tx.TransportDetail) == "transport_daerah" {
+							data.RTransportDaerah += tx.Subtotal
+						}
 					}
+					data.RTransportJumlah += tx.Subtotal
 				}
-				data.RTransportJumlah += tx.Subtotal
+			case transaction.TransactionTypeOther:
+				if tx.PaymentType == "uang_muka" {
+					data.UMTotalDibayarkan += tx.Subtotal
+				} else {
+					data.RTotalDibayarkan += tx.Subtotal
+				}
 			}
-		case transaction.TransactionTypeOther:
-			if tx.PaymentType == "uang_muka" {
-				data.UMTotalDibayarkan += tx.Subtotal
-			} else {
-				data.RTotalDibayarkan += tx.Subtotal
-			}
+
+			data.UMTotalDibayarkan = data.UMUangHarianJumlah + data.UMPenginapanJumlah + data.UMTransportJumlah
 		}
-
-		data.UMTotalDibayarkan = data.UMUangHarianJumlah + data.UMPenginapanJumlah + data.UMTransportJumlah
-
 	}
 
 	personNo := 1
-	for name, data := range personData {
+	for _, data := range personData {
 		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("A%d", currentRow), personNo); err != nil {
 			return currentRow, err
 		}
-		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("B%d", currentRow), name); err != nil {
+		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("B%d", currentRow), data.Name); err != nil {
 			return currentRow, err
 		}
 		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("C%d", currentRow), data.NIP); err != nil {
@@ -538,7 +542,7 @@ func (g *Generator) generateTableData(sheetName string, transactions []dto.Trans
 		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("U%d", currentRow), data.UMTotalDibayarkan); err != nil {
 			return currentRow, err
 		}
-		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("AB%d", currentRow), data.NoSpd); err != nil {
+		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("V%d", currentRow), data.NoSpd); err != nil {
 			return currentRow, err
 		}
 		if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("A%d", currentRow), fmt.Sprintf("V%d", currentRow), dataStyle); err != nil {
@@ -692,13 +696,13 @@ func (g *Generator) setColumnWidths(sheetName string) error {
 	} // Nama
 	if err := g.file.SetColWidth(sheetName, "C", "C", 20); err != nil {
 		return err
-	} // NIP
+	} // Employee ID
 	if err := g.file.SetColWidth(sheetName, "D", "D", 25); err != nil {
 		return err
-	} // JABATAN
-	if err := g.file.SetColWidth(sheetName, "E", "E", 8); err != nil {
+	} // Position
+	if err := g.file.SetColWidth(sheetName, "E", "E", 25); err != nil {
 		return err
-	} // Gol
+	} // Rank
 	if err := g.file.SetColWidth(sheetName, "F", "F", 30); err != nil {
 		return err
 	} // Tujuan
@@ -742,7 +746,7 @@ func (g *Generator) setColumnWidths(sheetName string) error {
 	return nil
 }
 
-func (g *Generator) generateKw(sheetName string, grer dto.GenerateRecapExcelRequest) error {
+func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if _, err := g.file.NewSheet(sheetName); err != nil {
 		return err
 	}
@@ -863,7 +867,7 @@ func (g *Generator) generateKw(sheetName string, grer dto.GenerateRecapExcelRequ
 	if err := g.file.SetCellValue(sheetName, "F8", ":"); err != nil {
 		return err
 	}
-	if err := g.file.SetCellValue(sheetName, "G8", grer.StartDate); err != nil {
+	if err := g.file.SetCellValue(sheetName, "G8", req.StartDate); err != nil {
 		return err
 	}
 
@@ -1029,7 +1033,7 @@ func (g *Generator) generateKw(sheetName string, grer dto.GenerateRecapExcelRequ
 	if err := g.file.SetCellValue(sheetName, "D16", "Tiket :"); err != nil {
 		return err
 	}
-	if err := g.file.SetCellValue(sheetName, "D17", fmt.Sprintf("- Pesawat Jakarta - %s (PP)", grer.DestinationCity)); err != nil {
+	if err := g.file.SetCellValue(sheetName, "D17", fmt.Sprintf("- Pesawat Jakarta - %s (PP)", req.DestinationCity)); err != nil {
 		return err
 	}
 	if err := g.file.SetCellValue(sheetName, "L17", "Rp."); err != nil {
@@ -1055,7 +1059,7 @@ func (g *Generator) generateKw(sheetName string, grer dto.GenerateRecapExcelRequ
 		return err
 	}
 
-	if err := g.file.SetCellValue(sheetName, "D20", fmt.Sprintf("Transport Dareah %s (PP)", grer.DestinationCity)); err != nil {
+	if err := g.file.SetCellValue(sheetName, "D20", fmt.Sprintf("Transport Dareah %s (PP)", req.DestinationCity)); err != nil {
 		return err
 	}
 	if err := g.file.SetCellValue(sheetName, "L20", "Rp."); err != nil {
@@ -1236,7 +1240,7 @@ func (g *Generator) generateKw(sheetName string, grer dto.GenerateRecapExcelRequ
 		return err
 	}
 
-	if err := g.file.SetCellValue(sheetName, "O27", fmt.Sprintf("Jakarta, %s", grer.ReceiptSignDate)); err != nil {
+	if err := g.file.SetCellValue(sheetName, "O27", fmt.Sprintf("Jakarta, %s", req.ReceiptSignatureDate)); err != nil {
 		return err
 	}
 
@@ -1458,7 +1462,7 @@ func (g *Generator) generateKw(sheetName string, grer dto.GenerateRecapExcelRequ
 	if err := g.file.SetCellFormula(sheetName, "A61", `="Berdasarkan Surat Perjalanan Dinas ( SPD ) Nomor "&VLOOKUP($T$1,'PEMANTAUAN REKAP UANG MUKA'!$A$11:$AJ$100,22,FALSE)`); err != nil {
 		return err
 	}
-	if err := g.file.SetCellValue(sheetName, "N61", fmt.Sprintf("tanggal %s", grer.SpdDate)); err != nil {
+	if err := g.file.SetCellValue(sheetName, "N61", fmt.Sprintf("tanggal %s", req.SpdDate)); err != nil {
 		return err
 	}
 	if err := g.file.SetCellValue(sheetName, "A62", "dengan ini kami menyatakan dengan sesungguhnya bahwa :"); err != nil {
@@ -1562,7 +1566,7 @@ func (g *Generator) generateKw(sheetName string, grer dto.GenerateRecapExcelRequ
 	if err := g.file.SetCellValue(sheetName, "A83", "Mengetahui / Menyetujui"); err != nil {
 		return err
 	}
-	if err := g.file.SetCellValue(sheetName, "N83", fmt.Sprintf("Jakarta, %s", grer.ReceiptSignDate)); err != nil {
+	if err := g.file.SetCellValue(sheetName, "N83", fmt.Sprintf("Jakarta, %s", req.ReceiptSignatureDate)); err != nil {
 		return err
 	}
 	if err := g.file.SetCellValue(sheetName, "N84", "Pelaksana SPD,"); err != nil {
@@ -1602,7 +1606,7 @@ func (g *Generator) generateKw(sheetName string, grer dto.GenerateRecapExcelRequ
 }
 
 // GenerateRecapExcel creates an Excel file based on transaction data
-func (g *Generator) GenerateRecapExcel(grer dto.GenerateRecapExcelRequest) (*bytes.Buffer, error) {
+func (g *Generator) GenerateRecapExcel(req dto.RecapReportDTO) (*bytes.Buffer, error) {
 	var err error
 	sheetName := "PEMANTAUAN REKAP UANG MUKA"
 	// Remove the default sheet created by NewFile
@@ -1621,7 +1625,7 @@ func (g *Generator) GenerateRecapExcel(grer dto.GenerateRecapExcelRequest) (*byt
 
 	// Data starting row
 	currentRow := 11
-	if currentRow, err = g.generateTableData(sheetName, grer.Transactions, currentRow); err != nil {
+	if currentRow, err = g.generateTableData(sheetName, req.Assignees, currentRow); err != nil {
 		return nil, err
 	}
 
@@ -1639,7 +1643,7 @@ func (g *Generator) GenerateRecapExcel(grer dto.GenerateRecapExcelRequest) (*byt
 
 	kwUangMuka := "KW UANG MUKA"
 
-	err = g.generateKw(kwUangMuka, grer)
+	err = g.generateKw(kwUangMuka, req)
 	if err != nil {
 		return nil, err
 	}
@@ -1657,7 +1661,7 @@ func (g *Generator) GenerateRecapExcel(grer dto.GenerateRecapExcelRequest) (*byt
 		return nil, err
 	}
 
-	if currentRow, err = g.generateTableData(sheetName, grer.Transactions, 11); err != nil {
+	if currentRow, err = g.generateTableData(sheetName, req.Assignees, 11); err != nil {
 		return nil, err
 	}
 

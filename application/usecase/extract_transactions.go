@@ -32,31 +32,12 @@ func (uc *ExtractTransactionsUseCase) Execute(ctx context.Context, req dto.Extra
 	}
 
 	// Execute domain logic
-	transactions, err := uc.transactionService.ExtractTransactions(ctx, documents)
+	recapReport, err := uc.transactionService.ExtractTransactions(ctx, documents)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert domain objects to DTOs
-	transactionDTOs := make([]dto.TransactionDTO, len(transactions))
-	for i, tx := range transactions {
-		transactionDTOs[i] = dto.TransactionDTO{
-			Name:            tx.GetName(),
-			Type:            string(tx.GetType()),
-			Subtype:         tx.GetSubtype(),
-			Amount:          tx.GetAmount(),
-			TotalNight:      tx.GetTotalNight(),
-			Subtotal:        tx.GetSubtotal(),
-			Description:     tx.GetDescription(),
-			TransportDetail: tx.GetTransportDetail(),
-			EmployeeID:      tx.GetEmployeeID(),
-			Position:        tx.GetPosition(),
-			Rank:            tx.GetRank(),
-		}
-	}
-
 	return &dto.ExtractTransactionsResponse{
-		Transactions: transactionDTOs,
-		Count:        len(transactionDTOs),
+		Report: *recapReport,
 	}, nil
 }

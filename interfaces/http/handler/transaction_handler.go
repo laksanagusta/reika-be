@@ -81,14 +81,14 @@ func (h *TransactionHandler) UploadAndExtract(c *fiber.Ctx) error {
 		})
 	}
 
-	// Return transactions only (backward compatible)
-	return c.JSON(response.Transactions)
+	// Return the complete report structure as requested
+	return c.JSON(response.Report)
 }
 
 func (h *TransactionHandler) GenerateRecapExcel(c *fiber.Ctx) error {
 	log.Println("Generating Excel recap file")
 
-	var reqBody dto.GenerateRecapExcelRequest
+	var reqBody dto.RecapReportDTO
 	if err := c.BodyParser(&reqBody); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "Invalid request body",
@@ -96,9 +96,9 @@ func (h *TransactionHandler) GenerateRecapExcel(c *fiber.Ctx) error {
 		})
 	}
 
-	if len(reqBody.Transactions) == 0 {
+	if len(reqBody.Assignees) == 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "No transactions provided for Excel generation",
+			"error": "No assignees provided for Excel generation",
 		})
 	}
 

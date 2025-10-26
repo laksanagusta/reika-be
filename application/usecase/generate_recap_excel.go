@@ -21,7 +21,7 @@ func NewGenerateRecapExcelUseCase(excelGenerator *excel.Generator) *GenerateReca
 }
 
 // Execute performs the Excel recap generation use case
-func (uc *GenerateRecapExcelUseCase) Execute(ctx context.Context, req dto.GenerateRecapExcelRequest) (*dto.GenerateRecapExcelResponse, error) {
+func (uc *GenerateRecapExcelUseCase) Execute(ctx context.Context, req dto.RecapReportDTO) (*dto.GenerateRecapExcelResponse, error) {
 	// Generate the Excel file
 	excelBuffer, err := uc.excelGenerator.GenerateRecapExcel(req)
 	if err != nil {

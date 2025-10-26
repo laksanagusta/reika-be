@@ -3,6 +3,8 @@ package transaction
 import (
 	"context"
 	"errors"
+
+	"sandbox/application/dto"
 )
 
 // Service provides domain business logic for transactions
@@ -18,12 +20,12 @@ func NewService(extractor ExtractorRepository) *Service {
 }
 
 // ExtractTransactions extracts transactions from multiple documents
-func (s *Service) ExtractTransactions(ctx context.Context, documents []Document) ([]*Transaction, error) {
+func (s *Service) ExtractTransactions(ctx context.Context, documents []Document) (*dto.RecapReportDTO, error) {
 	if len(documents) == 0 {
 		return nil, errors.New("no documents provided")
 	}
 
-	transactions, err := s.extractor.ExtractFromDocuments(ctx, documents)
+	recapReport, err := s.extractor.ExtractFromDocuments(ctx, documents)
 	if err != nil {
 		return nil, err
 	}
@@ -31,5 +33,5 @@ func (s *Service) ExtractTransactions(ctx context.Context, documents []Document)
 	// Additional business logic can be added here
 	// For example: validation, deduplication, etc.
 
-	return transactions, nil
+	return recapReport, nil
 }

@@ -2,8 +2,6 @@ package dto
 
 import (
 	"time"
-
-	"sandbox/domain/transaction"
 )
 
 // ExcelReportRow represents a single row in the Excel report
@@ -52,23 +50,4 @@ type GenerateReportResponse struct {
 type ReportService interface {
 	AggregateTransactions(transactions []TransactionDTO) ([]ExcelReportRow, error)
 	GenerateExcel(rows []ExcelReportRow) ([]byte, error)
-}
-
-// Mapping functions for TransactionType to specific report fields
-func MapTransactionToReportRow(tx TransactionDTO, row *ExcelReportRow) {
-	switch tx.Type {
-	case string(transaction.TransactionTypeAccommodation):
-		row.PenginapanJumlah += tx.Amount // Assuming amount for accommodation is total
-		if tx.TotalNight != nil {
-			row.PenginapanJmlMalam += *tx.TotalNight
-			// If total_night is available, calculate per_malam
-			if *tx.TotalNight > 0 {
-				row.PenginapanPerMalam = tx.Amount / *tx.TotalNight
-			}
-		}
-	case string(transaction.TransactionTypeTransport):
-		row.TransportTiketPesawat += tx.Amount
-		row.TransportJumlah += tx.Amount
-	default:
-	}
 }

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"sandbox/application/dto"
 	"sandbox/domain/transaction"
 )
 
@@ -36,7 +37,7 @@ func NewClient(apiKey string) *Client {
 }
 
 // ExtractFromDocuments implements the ExtractorRepository interface
-func (c *Client) ExtractFromDocuments(ctx context.Context, documents []transaction.Document) ([]*transaction.Transaction, error) {
+func (c *Client) ExtractFromDocuments(ctx context.Context, documents []transaction.Document) (*dto.RecapReportDTO, error) {
 	if len(documents) == 0 {
 		return nil, errors.New("no documents provided")
 	}
@@ -101,76 +102,108 @@ func (c *Client) getAPIURL() string {
 
 func (c *Client) buildPrompt() string {
 	return `Baca semua dokumen berikut (gambar atau PDF).
-Ekstrak setiap transaksi dan tampilkan dalam format ARRAY JSON valid berikut ini:
+Ekstrak setiap transaksi dan tampilkan dalam format JSON valid berikut ini:
 
-[
-  {
-    "name": "NAMA_ORANG",
-    "type": "accommodation | transport | other",
-    "subtype": "hotel | flight | train | taxi | ...",
-    "amount": number,
-    "total_night": number,
-    "subtotal": number, -> hasil amount*total_night kalo dia accomodation tapi kalo selain itu langsung ambil dari amount aja
-	"description" : string, -> ini adalah keterangan transaksi ini transaksi apa, misalkan gojek dari alamat1 ke alamat2, kalo hotel jelasin juga hotelnya
-	"transport_detail" : string, -> ini terisi hanya jika dia transport darat ya (pesawat tidak termasuk) 1.jika dia dari bandara soetta atau tujuannya ke bandara soetta maka valuenya menjadi "transport_asal" 2.jika mengandung bandara lain selain soetta maka valuenya adalah "transport_daerah"
-	"employee_id" : string, -> ini adalah NIP ambil dari surat tugas
-	"position" : string, -> ini adalah jabatan ambil dari surat tugas
-	"rank" : string -> ini adalah golongan ambil dari surat tugas
-  }
-]
+{
+  "startDate": "YYYY-MM-DD", -> ambil dari file surat tugas
+  "endDate": "YYYY-MM-DD", -> ambil dari file surat tugas
+  "activityPurpose": "TUJUAN_AKTIVITAS", -> ambil dari file surat tugas
+  "destinationCity": "KOTA_TUJUAN", -> ambil dari file surat tugas
+  "spdDate": "YYYY-MM-DD", -> ambil dari file surat tugas
+  "departureDate": "YYYY-MM-DD", -> ambil dari file surat tugas
+  "returnDate": "YYYY-MM-DD", -> ambil dari file surat tugas
+  "receiptSignatureDate": "YYYY-MM-DD", -> ambil dari file surat tugas
+  "assignees": [
+    {
+      "name": "NAMA_PEGAWAI", -> ambil dari file surat tugas
+      "spd_number": "NOMOR_SPD", -> ambil dari file surat tugas
+      "employee_id": "NIP_PEGAWAI", -> ambil dari file surat tugas
+      "position": "JABATAN_PEGAWAI", -> ambil dari file surat tugas
+      "rank": "GOLONGAN_PEGAWAI", -> ambil dari file surat tugas
+      "transactions": [
+        {
+          "name": "NAMA_PEMESAN_TRANSAKSI",
+          "type": "accommodation | transport | other",
+          "subtype": "hotel | flight | train | taxi | ...",
+          "amount": number,
+          "total_night": number,
+          "subtotal": number, -> hasil amount*total_night kalo dia accomodation tapi kalo selain itu langsung ambil dari amount aja
+	      "description" : string, -> ini adalah keterangan transaksi ini transaksi apa, misalkan gojek dari alamat1 ke alamat2, kalo hotel jelasin juga hotelnya
+	      "transport_detail" : string, -> ini terisi hanya jika dia transport darat ya (pesawat tidak termasuk) 1.jika dia dari bandara soetta atau tujuannya ke bandara soetta maka valuenya menjadi "transport_asal" 2.jika mengandung bandara lain selain soetta maka valuenya adalah "transport_daerah"
+        }
+      ]
+    }
+  ]
+}
 
-- Kembalikan hasil hanya dalam JSON array valid (tanpa teks tambahan).
+- Kembalikan hasil hanya dalam JSON valid (tanpa teks tambahan).
 - Jangan bungkus JSON dengan tanda kutip atau karakter escape.
 - Jika total_night tidak ada, field tersebut boleh dihapus.
 - Pastikan angka hanya berupa digit (tanpa simbol mata uang).
-- Gabungkan semua nota dari semua file dalam satu array.
-- Nama orangnya cukup nama asli aja ya tanpa ada embel-embel lainnya
-- untuk data transaksinya harusnya nama yg muncul adalah nama yg ada di surat tugas jadi harap cocokkan sesuai surat tugas
+- Untuk data transaksi, nama yang digunakan harus sesuai dengan nama yang tercantum di surat tugas. Harap lakukan pengecekan dan pencocokan dengan surat tugas.
+- Jika nama pemesan di transaksi tersebut tidak tercantum di surat tugas, mohon assign ke salah satu nama yang ada di surat tugas.
+- Jangan menggunakan nama driver sebagai nama transaksi — gunakan nama pemesan.
+- Group semua transaksi di bawah setiap assignee.
 `
 }
 
-func (c *Client) parseResponse(bodyResp []byte) ([]*transaction.Transaction, error) {
-	var geminiResp geminiResponse
-	if err := json.Unmarshal(bodyResp, &geminiResp); err != nil {
-		return nil, fmt.Errorf("failed to parse Gemini response: %w", err)
+func (c *Client) parseResponse(bodyResp []byte) (*dto.RecapReportDTO, error) {
+	var geminiAPIResponse geminiResponse
+	if err := json.Unmarshal(bodyResp, &geminiAPIResponse); err != nil {
+		return nil, fmt.Errorf("failed to parse Gemini API response wrapper: %w", err)
 	}
 
-	if len(geminiResp.Candidates) == 0 || len(geminiResp.Candidates[0].Content.Parts) == 0 {
-		return nil, errors.New("empty response from Gemini")
+	if len(geminiAPIResponse.Candidates) == 0 || len(geminiAPIResponse.Candidates[0].Content.Parts) == 0 {
+		return nil, errors.New("empty response candidates or parts from Gemini API")
 	}
 
-	rawText := geminiResp.Candidates[0].Content.Parts[0].Text
+	rawText := geminiAPIResponse.Candidates[0].Content.Parts[0].Text
 	cleanJSON := c.cleanJSON(rawText)
 
-	var rawTransactions []rawTransaction
-	if err := json.Unmarshal([]byte(cleanJSON), &rawTransactions); err != nil {
-		return nil, fmt.Errorf("failed to parse transactions JSON: %w (raw: %s)", err, cleanJSON)
+	var geminiRawReport geminiReportResponse
+	if err := json.Unmarshal([]byte(cleanJSON), &geminiRawReport); err != nil {
+		return nil, fmt.Errorf("failed to parse Gemini report content: %w (raw: %s)", err, cleanJSON)
 	}
 
-	// Convert raw transactions to domain entities
-	transactions := make([]*transaction.Transaction, 0, len(rawTransactions))
-	for _, raw := range rawTransactions {
-		tx, err := transaction.NewTransaction(
-			raw.Name,
-			raw.Type,
-			raw.Subtype,
-			raw.Amount,
-			raw.Subtotal,
-			raw.TotalNight,
-			raw.Description,
-			raw.TransportDetail,
-			raw.EmployeeID,
-			raw.Position,
-			raw.Rank,
-		)
-		if err != nil {
-			// Log error but continue processing other transactions
-			continue
+	// Convert raw assignee responses to dto.AssigneeDTO
+	assignees := make([]dto.AssigneeDTO, 0, len(geminiRawReport.Assignees))
+	for _, rawAssignee := range geminiRawReport.Assignees {
+		transactionsDTO := make([]dto.TransactionDTO, 0, len(rawAssignee.Transactions))
+		for _, rawTx := range rawAssignee.Transactions {
+			transactionsDTO = append(transactionsDTO, dto.TransactionDTO{
+				Name:            rawTx.Name,
+				Type:            rawTx.Type,
+				Subtype:         rawTx.Subtype,
+				Amount:          rawTx.Amount,
+				TotalNight:      rawTx.TotalNight,
+				Subtotal:        rawTx.Subtotal,
+				PaymentType:     "", // Assuming default empty, needs to be derived if applicable
+				Description:     rawTx.Description,
+				TransportDetail: rawTx.TransportDetail,
+			})
 		}
-		transactions = append(transactions, tx)
+
+		assignees = append(assignees, dto.AssigneeDTO{
+			Name:         rawAssignee.Name,
+			SpdNumber:    rawAssignee.SpdNumber,
+			EmployeeID:   rawAssignee.EmployeeID,
+			Position:     rawAssignee.Position,
+			Rank:         rawAssignee.Rank,
+			Transactions: transactionsDTO,
+		})
 	}
 
-	return transactions, nil
+	return &dto.RecapReportDTO{
+		StartDate:            geminiRawReport.StartDate,
+		EndDate:              geminiRawReport.EndDate,
+		ActivityPurpose:      geminiRawReport.ActivityPurpose,
+		DestinationCity:      geminiRawReport.DestinationCity,
+		SpdDate:              geminiRawReport.SpdDate,
+		DepartureDate:        geminiRawReport.DepartureDate,
+		ReturnDate:           geminiRawReport.ReturnDate,
+		ReceiptSignatureDate: geminiRawReport.ReceiptSignatureDate,
+		Assignees:            assignees,
+	}, nil
 }
 
 func (c *Client) cleanJSON(s string) string {
@@ -192,6 +225,28 @@ type geminiResponse struct {
 	} `json:"candidates"`
 }
 
+// geminiReportResponse represents the full report structure from Gemini API
+type geminiReportResponse struct {
+	StartDate            string                `json:"startDate"`
+	EndDate              string                `json:"endDate"`
+	ActivityPurpose      string                `json:"activityPurpose"`
+	DestinationCity      string                `json:"destinationCity"`
+	SpdDate              string                `json:"spdDate"`
+	DepartureDate        string                `json:"departureDate"`
+	ReturnDate           string                `json:"returnDate"`
+	ReceiptSignatureDate string                `json:"receiptSignatureDate"`
+	Assignees            []rawAssigneeResponse `json:"assignees"`
+}
+
+type rawAssigneeResponse struct {
+	Name         string           `json:"name"`
+	SpdNumber    string           `json:"spd_number"`
+	EmployeeID   string           `json:"employee_id"`
+	Position     string           `json:"position"`
+	Rank         string           `json:"rank"`
+	Transactions []rawTransaction `json:"transactions"`
+}
+
 type rawTransaction struct {
 	Name            string `json:"name"`
 	Type            string `json:"type"`
@@ -201,7 +256,4 @@ type rawTransaction struct {
 	Subtotal        int32  `json:"subtotal"`
 	Description     string `json:"description"`
 	TransportDetail string `json:"transport_detail"`
-	EmployeeID      string `json:"employee_id"`
-	Position        string `json:"position"`
-	Rank            string `json:"rank"`
 }

@@ -9,12 +9,31 @@ type TransactionDTO struct {
 	TotalNight      *int32 `json:"total_night,omitempty"`
 	Subtotal        int32  `json:"subtotal"`
 	PaymentType     string `json:"payment_type"`
-	SpdNumber       string `json:"spd_number"`
 	Description     string `json:"description"`
 	TransportDetail string `json:"transport_detail"`
-	EmployeeID      string `json:"employee_id"`
-	Position        string `json:"position"`
-	Rank            string `json:"rank"`
+}
+
+// AssigneeDTO represents an assignee with their transactions
+type AssigneeDTO struct {
+	Name         string           `json:"name"`
+	SpdNumber    string           `json:"spd_number"`
+	EmployeeID   string           `json:"employee_id"`
+	Position     string           `json:"position"`
+	Rank         string           `json:"rank"`
+	Transactions []TransactionDTO `json:"transactions"`
+}
+
+// RecapReportDTO represents the overall structure of the recap report
+type RecapReportDTO struct {
+	StartDate            string        `json:"startDate"`
+	EndDate              string        `json:"endDate"`
+	ActivityPurpose      string        `json:"activityPurpose"` // This maps to Destination in current GenerateRecapExcelRequest
+	DestinationCity      string        `json:"destinationCity"`
+	SpdDate              string        `json:"spdDate"`
+	DepartureDate        string        `json:"departureDate"`
+	ReturnDate           string        `json:"returnDate"`
+	ReceiptSignatureDate string        `json:"receiptSignatureDate"`
+	Assignees            []AssigneeDTO `json:"assignees"`
 }
 
 // ExtractTransactionsRequest represents the request for extracting transactions
@@ -31,21 +50,20 @@ type FileUpload struct {
 
 // ExtractTransactionsResponse represents the response
 type ExtractTransactionsResponse struct {
-	Transactions []TransactionDTO `json:"transactions"`
-	Count        int              `json:"count"`
+	Report RecapReportDTO `json:"report"`
 }
 
 // GenerateRecapExcelRequest represents the request for generating the recap Excel
 type GenerateRecapExcelRequest struct {
-	StartDate       string           `json:"start_date"`
-	EndDate         string           `json:"end_date"`
-	DepartureDate   string           `json:"departure_date"`
-	ReceiptSignDate string           `json:"receipt_sign_date"`
-	ReturnDate      string           `json:"return_date"`
-	SpdDate         string           `json:"spd_date"`
-	Destination     string           `json:"destination"`
-	DestinationCity string           `json:"destination_city"`
-	Transactions    []TransactionDTO `json:"transactions"`
+	StartDate            string        `json:"startDate"`
+	EndDate              string        `json:"endDate"`
+	ActivityPurpose      string        `json:"activityPurpose"`
+	DestinationCity      string        `json:"destinationCity"`
+	SpdDate              string        `json:"spdDate"`
+	DepartureDate        string        `json:"departureDate"`
+	ReturnDate           string        `json:"returnDate"`
+	ReceiptSignatureDate string        `json:"receiptSignatureDate"`
+	Assignees            []AssigneeDTO `json:"assignees"`
 }
 
 // GenerateRecapExcelResponse represents the response for generating the recap Excel
