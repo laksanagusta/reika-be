@@ -31,7 +31,7 @@ func NewClient(apiKey string) *Client {
 	return &Client{
 		apiKey: apiKey,
 		httpClient: &http.Client{
-			Timeout: 60 * time.Second,
+			Timeout: 300 * time.Second, // Increased to 5 minutes for large document processing
 		},
 	}
 }
@@ -40,6 +40,11 @@ func NewClient(apiKey string) *Client {
 func (c *Client) ExtractFromDocuments(ctx context.Context, documents []transaction.Document) (*dto.RecapReportDTO, error) {
 	if len(documents) == 0 {
 		return nil, errors.New("no documents provided")
+	}
+
+	// Check if context is already cancelled
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("context cancelled before starting API call: %w", err)
 	}
 
 	prompt := c.buildPrompt()
@@ -80,6 +85,10 @@ func (c *Client) ExtractFromDocuments(ctx context.Context, documents []transacti
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		// Provide more detailed error information
+		if ctx.Err() != nil {
+			return nil, fmt.Errorf("context cancelled during API call: %w", ctx.Err())
+		}
 		return nil, fmt.Errorf("failed to call Gemini API: %w", err)
 	}
 	defer resp.Body.Close()
@@ -129,7 +138,7 @@ Ekstrak setiap transaksi dan tampilkan dalam format JSON valid berikut ini:
           "total_night": number,
           "subtotal": number, -> hasil amount*total_night kalo dia accomodation tapi kalo selain itu langsung ambil dari amount aja
 	      "description" : string, -> ini adalah keterangan transaksi ini transaksi apa, misalkan gojek dari alamat1 ke alamat2, kalo hotel jelasin juga hotelnya
-	      "transport_detail" : string, -> ini terisi hanya jika dia transport darat ya (pesawat tidak termasuk) 1.jika dia dari bandara soetta atau tujuannya ke bandara soetta maka valuenya menjadi "transport_asal" 2.jika mengandung bandara lain selain soetta maka valuenya adalah "transport_daerah"
+	      "transport_detail" : string, -> ini terisi hanya jika dia transport darat ya (pesawat tidak termasuk) 1.jika dia dari bandara soetta atau tujuannya ke bandara soetta maka valuenya menjadi "transport_asal" atau kalau dia transportasinya di jakarta juga masuk trasnport asal 2.jika mengandung bandara lain selain soetta maka valuenya adalah "transport_daerah"
         }
       ]
     }

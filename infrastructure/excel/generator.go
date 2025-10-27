@@ -2,6 +2,7 @@ package excel
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -372,7 +373,7 @@ type PersonRecap struct {
 	RTotalDibayarkan       int32
 }
 
-func (g *Generator) generateTableData(sheetName string, assignees []dto.AssigneeDTO, currentRow int) (int, error) {
+func (g *Generator) generateTableData(sheetName string, req dto.RecapReportDTO, currentRow int) (int, error) {
 	// Style for text data
 	textStyle, err := g.file.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{
@@ -419,7 +420,11 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 	constUangHarianPerhari := int32(688000)
 	constUangHarianJumlah := constUangHarianJmlHari * constUangHarianPerhari
 
-	for _, assignee := range assignees {
+	for _, assignee := range req.Assignees {
+		if assignee.EmployeeID == "" {
+			continue
+		}
+
 		data, exists := personData[assignee.EmployeeID]
 		if !exists {
 			data = &PersonRecap{
@@ -427,8 +432,8 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 				NIP:                 assignee.EmployeeID,
 				Jabatan:             assignee.Position,
 				Gol:                 assignee.Rank,
-				Tujuan:              "-", // To be filled from report DTO or transaction description
-				Tanggal:             "-", // To be filled from report DTO or transaction date
+				Tujuan:              req.DestinationCity,
+				Tanggal:             req.DepartureDate,
 				NoSpd:               assignee.SpdNumber,
 				UMUangHarianJmlHari: constUangHarianJmlHari,
 				UMUangHarianPerhari: constUangHarianPerhari,
@@ -438,23 +443,34 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 		}
 
 		for _, tx := range assignee.Transactions {
+			// Skip if transaction has zero amount
+			if tx.Subtotal <= 0 {
+				continue
+			}
 			switch transaction.TransactionType(strings.ToLower(tx.Type)) {
 			case transaction.TransactionTypeAccommodation:
-				if tx.PaymentType == "uang_muka" {
-					if tx.TotalNight != nil {
+				if tx.PaymentType == "uang muka" {
+					jsn, _ := json.Marshal(tx)
+					log.Println(string(jsn))
+
+					if tx.TotalNight != nil && *tx.TotalNight > 0 {
 						data.UMPenginapanJmlHari += *tx.TotalNight
 					}
-					data.UMPenginapanPerhari = tx.Amount // Assuming Amount is per night
+					if tx.Amount > 0 {
+						data.UMPenginapanPerhari = tx.Amount
+					}
 					data.UMPenginapanJumlah += tx.Subtotal
 				} else {
-					if tx.TotalNight != nil {
+					if tx.TotalNight != nil && *tx.TotalNight > 0 {
 						data.RPenginapanJmlHari += *tx.TotalNight
 					}
-					data.RPenginapanPerhari = tx.Amount // Assuming Amount is per night
+					if tx.Amount > 0 {
+						data.RPenginapanPerhari = tx.Amount
+					}
 					data.RPenginapanJumlah += tx.Subtotal
 				}
 			case transaction.TransactionTypeTransport:
-				if tx.PaymentType == "uang_muka" {
+				if tx.PaymentType == "uang muka" {
 					if strings.ToLower(tx.Subtype) == "flight" {
 						data.UMTransportTiketPesawat += tx.Subtotal
 					}
@@ -484,7 +500,7 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 					data.RTransportJumlah += tx.Subtotal
 				}
 			case transaction.TransactionTypeOther:
-				if tx.PaymentType == "uang_muka" {
+				if tx.PaymentType == "uang muka" {
 					data.UMTotalDibayarkan += tx.Subtotal
 				} else {
 					data.RTotalDibayarkan += tx.Subtotal
@@ -526,7 +542,6 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 			return currentRow, err
 		}
 
-		// Numeric columns with thousand separator
 		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("H%d", currentRow), data.UMUangHarianJmlHari); err != nil {
 			return currentRow, err
 		}
@@ -536,42 +551,40 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("K%d", currentRow), data.UMUangHarianJumlah); err != nil {
 			return currentRow, err
 		}
-		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("L%d", currentRow), data.UMPenginapanJmlHari); err != nil {
-			return currentRow, err
-		}
-		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("N%d", currentRow), data.UMPenginapanPerhari); err != nil {
-			return currentRow, err
-		}
-		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("O%d", currentRow), data.UMPenginapanJumlah); err != nil {
-			return currentRow, err
-		}
-		if err := g.file.SetCellValue(sheetName, fmt.Sprintf("P%d", currentRow), data.UMTransportTiketPesawat); err != nil {
-			return currentRow, err
-		}
 
-		if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
-			// Numeric columns for REKAP RAMPUNG sheet
-			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("Q%d", currentRow), data.RTransportTiketPesawat); err != nil {
+		if sheetName == "PEMANTAUAN REKAP UANG MUKA" {
+			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("L%d", currentRow), data.UMPenginapanJmlHari); err != nil {
 				return currentRow, err
 			}
-			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("R%d", currentRow), data.RTransportAsal); err != nil {
+			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("N%d", currentRow), data.UMPenginapanPerhari); err != nil {
 				return currentRow, err
 			}
-			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("S%d", currentRow), data.RTransportDaerah); err != nil {
-				return currentRow, err
-			}
-			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("T%d", currentRow), data.RTransportDarat); err != nil {
+			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("O%d", currentRow), data.UMPenginapanJumlah); err != nil {
 				return currentRow, err
 			}
 		}
 
-		// Formula for transport total
+		if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
+			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("Q%d", currentRow), data.RTransportAsal); err != nil {
+				return currentRow, err
+			}
+			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("R%d", currentRow), data.RTransportDaerah); err != nil {
+				return currentRow, err
+			}
+			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("S%d", currentRow), data.RTransportDarat); err != nil {
+				return currentRow, err
+			}
+		} else {
+			if err := g.file.SetCellValue(sheetName, fmt.Sprintf("P%d", currentRow), data.RTransportTiketPesawat); err != nil {
+				return currentRow, err
+			}
+		}
+
 		if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("T%d", currentRow), fmt.Sprintf("=P%d+Q%d+R%d+S%d", currentRow, currentRow, currentRow, currentRow)); err != nil {
 			return currentRow, err
 		}
 
 		if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
-			// Formulas for REKAP RAMPUNG sheet
 			if err := g.file.SetCellFormula(sheetName, fmt.Sprintf("U%d", currentRow), fmt.Sprintf("=T%d+O%d+K%d", currentRow, currentRow, currentRow)); err != nil {
 				return currentRow, err
 			}
@@ -615,13 +628,7 @@ func (g *Generator) generateTableData(sheetName string, assignees []dto.Assignee
 			}
 		} else {
 			// Apply text style to text columns (A-G, I, M, AA)
-			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("A%d", currentRow), fmt.Sprintf("G%d", currentRow), textStyle); err != nil {
-				return currentRow, err
-			}
-			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("I%d", currentRow), fmt.Sprintf("I%d", currentRow), textStyle); err != nil {
-				return currentRow, err
-			}
-			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("M%d", currentRow), fmt.Sprintf("M%d", currentRow), textStyle); err != nil {
+			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("A%d", currentRow), fmt.Sprintf("U%d", currentRow), textStyle); err != nil {
 				return currentRow, err
 			}
 			if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("AA%d", currentRow), fmt.Sprintf("AA%d", currentRow), textStyle); err != nil {
@@ -940,6 +947,11 @@ func (g *Generator) setColumnWidths(sheetName string) error {
 
 func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if _, err := g.file.NewSheet(sheetName); err != nil {
+		return err
+	}
+
+	// Set T1 cell to 1 for VLOOKUP reference
+	if err := g.file.SetCellValue(sheetName, "T1", 1); err != nil {
 		return err
 	}
 
@@ -1298,7 +1310,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if err := g.file.SetCellFormula(sheetName, "C22", "=VLOOKUP($T$1,'PEMANTAUAN REKAP UANG MUKA'!$A$11:$AC$100,12,FALSE)"); err != nil {
 		return err
 	}
-	if err := g.file.SetCellFormula(sheetName, "D22", "==VLOOKUP($T$1,'PEMANTAUAN REKAP UANG MUKA'!$A$11:$AC$100,13,FALSE)"); err != nil {
+	if err := g.file.SetCellFormula(sheetName, "D22", "=VLOOKUP($T$1,'PEMANTAUAN REKAP UANG MUKA'!$A$11:$AC$100,13,FALSE)"); err != nil {
 		return err
 	}
 	if err := g.file.SetCellValue(sheetName, "D22", "mlm"); err != nil {
@@ -1474,9 +1486,6 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 	if err := g.file.SetCellValue(sheetName, "B35", expenditureTreasurerId); err != nil {
-		return err
-	}
-	if err := g.file.SetCellValue(sheetName, "I34", payer); err != nil {
 		return err
 	}
 	if err := g.file.SetCellValue(sheetName, "I35", "NIP"); err != nil {
@@ -1801,13 +1810,19 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	// dengan ini kami menyatakan dengan sesungguhnya bahwa :
-
 	return nil
 }
 
 // GenerateRecapExcel creates an Excel file based on transaction data
 func (g *Generator) GenerateRecapExcel(req dto.RecapReportDTO) (*bytes.Buffer, error) {
+	jsn, _ := json.Marshal(req)
+	log.Println(string(jsn))
+
+	// Validate input data
+	if len(req.Assignees) == 0 {
+		return nil, fmt.Errorf("no assignees provided")
+	}
+
 	var err error
 	sheetName := "PEMANTAUAN REKAP UANG MUKA"
 	// Remove the default sheet created by NewFile
@@ -1826,7 +1841,7 @@ func (g *Generator) GenerateRecapExcel(req dto.RecapReportDTO) (*bytes.Buffer, e
 
 	// Data starting row
 	currentRow := 11
-	if currentRow, err = g.generateTableData(sheetName, req.Assignees, currentRow); err != nil {
+	if currentRow, err = g.generateTableData(sheetName, req, currentRow); err != nil {
 		return nil, err
 	}
 
@@ -1862,7 +1877,7 @@ func (g *Generator) GenerateRecapExcel(req dto.RecapReportDTO) (*bytes.Buffer, e
 		return nil, err
 	}
 
-	if currentRow, err = g.generateTableData(sheetName, req.Assignees, 11); err != nil {
+	if currentRow, err = g.generateTableData(sheetName, req, 11); err != nil {
 		return nil, err
 	}
 
@@ -1950,7 +1965,7 @@ var angka = []string{
 	"", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas",
 }
 
-func Terbilang(n int) string {
+func Terbilang(n int64) string {
 	if n < 12 {
 		return angka[n]
 	} else if n < 20 {

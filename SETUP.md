@@ -14,7 +14,7 @@
 
 ```bash
 git clone <repository-url>
-cd sandbox
+cd reika
 ```
 
 #### 2. Install Dependencies
@@ -58,7 +58,7 @@ CORS_ALLOW_ORIGINS=http://localhost:3000
 
 ```bash
 # Build project
-go build -o sandbox
+go build -o reika
 
 # Atau langsung run
 go run main.go
@@ -111,7 +111,7 @@ curl -X POST http://localhost:5002/api/upload \
 ### Struktur Project
 
 ```
-sandbox/
+reika/
 ├── domain/                     # Layer Domain
 │   ├── transaction/
 │   │   ├── entity.go          # Entity Transaction
@@ -219,13 +219,13 @@ go test ./domain/transaction/...
 
 ```bash
 # Build binary
-go build -o sandbox
+go build -o reika
 
 # Build dengan optimizations
-go build -ldflags="-s -w" -o sandbox
+go build -ldflags="-s -w" -o reika
 
 # Run binary
-./sandbox
+./reika
 ```
 
 ### Environment Variables Reference
@@ -248,22 +248,22 @@ FROM golang:1.25-alpine AS builder
 WORKDIR /app
 COPY . .
 RUN go mod download
-RUN go build -o sandbox
+RUN go build -o reika
 
 FROM alpine:latest
 WORKDIR /app
-COPY --from=builder /app/sandbox .
+COPY --from=builder /app/reika .
 COPY .env .env
 
 EXPOSE 5002
-CMD ["./sandbox"]
+CMD ["./reika"]
 ```
 
 Build dan run:
 
 ```bash
-docker build -t sandbox-app .
-docker run -p 5002:5002 --env-file .env sandbox-app
+docker build -t reika-app .
+docker run -p 5002:5002 --env-file .env reika-app
 ```
 
 ### Security Checklist

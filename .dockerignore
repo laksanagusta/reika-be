@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local development
+.env.local
+.env.development
+
+# Test files
+*_test.go
+test_*
+
+# Temporary files
+tmp/
+temp/
+
+# Docker files
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# CI/CD
+.github/
+
+# Coverage reports
+coverage.out
+
+# Binaries (keep only the one we build)
+main
+!bin/main

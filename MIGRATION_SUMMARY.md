@@ -28,7 +28,7 @@ main.go (170 lines)
 ### After (Domain-Driven Design)
 
 ```
-sandbox/
+reika/
 ├── domain/                  # Business Logic Core
 ├── application/            # Use Cases
 ├── infrastructure/         # External Services

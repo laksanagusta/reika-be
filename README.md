@@ -1,13 +1,13 @@
-# Transaction Extractor - Domain-Driven Design Architecture
+# Reika - Transaction Extractor & Meeting Management
 
-A Go application built with Domain-Driven Design (DDD) principles for extracting transaction data from documents (images and PDFs) using Google Gemini AI.
+A Go application built with Domain-Driven Design (DDD) principles for extracting transaction data from documents (images and PDFs) using Google Gemini AI and managing meetings.
 
 ## 🏗️ Architecture
 
 This project follows **Domain-Driven Design (DDD)** and **Clean Architecture** principles, organized into distinct layers:
 
 ```
-sandbox/
+reika/
 ├── domain/                 # Domain Layer (Business Logic Core)
 │   ├── transaction/
 │   │   ├── entity.go      # Transaction entity with business rules

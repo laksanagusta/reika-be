@@ -3,7 +3,7 @@
 ## 📁 Complete File Structure
 
 ```
-sandbox/
+reika/
 │
 ├── 📚 Documentation Files
 │   ├── README.md                    # Overview & quick start
@@ -377,7 +377,7 @@ CORS_ALLOW_ORIGINS=http://localhost:3000
 go run main.go
 
 # Build binary
-go build -o sandbox
+go build -o reika
 
 # Clean build
 go clean && go build
