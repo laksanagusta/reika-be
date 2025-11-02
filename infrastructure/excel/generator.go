@@ -8,6 +8,7 @@ import (
 
 	"sandbox/application/dto"
 	"sandbox/domain/transaction"
+	"sandbox/utils"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -1878,19 +1879,11 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		g.file.SetRowHeight(sheetName, i, 13)
 	}
 
-	if err := g.file.SetDefinedName(&excelize.DefinedName{
-		Name:     "_xlnm.Print_Area",
-		RefersTo: sheetName + "!$A:$S",
-		Scope:    sheetName,
-	}); err != nil {
-		panic(err)
-	}
-
 	portrait := "portrait"
 	excelizeOne := 1
 	excelizeTrue := true
-	// --- Set layout halaman (fit to page + margin + orientasi) ---
 	if err := g.file.SetPageLayout(sheetName, &excelize.PageLayoutOptions{
+		Size:        utils.ToPtr(14),
 		Orientation: &portrait,
 		FitToWidth:  &excelizeOne,
 		FitToHeight: &excelizeOne,
@@ -1899,6 +1892,12 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	}
 
 	_ = g.file.SetPageMargins(sheetName, &excelize.PageLayoutMarginsOptions{
+		Left:         utils.ToPtr(0.2362204),
+		Right:        utils.ToPtr(0.2362204),
+		Top:          utils.ToPtr(0.3543307),
+		Bottom:       utils.ToPtr(0.3543307),
+		Header:       utils.ToPtr(0.3149606),
+		Footer:       utils.ToPtr(0.3149606),
 		Horizontally: &excelizeTrue, // center horizontal
 		Vertically:   &excelizeTrue, // set true kalau mau center vertical juga
 	})
@@ -1907,6 +1906,14 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	_ = g.file.SetSheetView(sheetName, 0, &excelize.ViewOptions{
 		ZoomScale: &zoomScale,
 	})
+
+	if err := g.file.SetDefinedName(&excelize.DefinedName{
+		Name:     "_xlnm.Print_Area",
+		RefersTo: sheetName + "!$A$1:$S$91",
+		Scope:    sheetName,
+	}); err != nil {
+		return err
+	}
 
 	return nil
 }
