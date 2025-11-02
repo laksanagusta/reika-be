@@ -1,7 +1,7 @@
 package config
 
 import (
-	"errors"
+	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -9,12 +9,12 @@ import (
 
 // Config holds all application configuration
 type Config struct {
-	Server      ServerConfig
-	Gemini      GeminiConfig
-	Zoom        ZoomConfig
-	Drive       DriveConfig
+	Server       ServerConfig
+	Gemini       GeminiConfig
+	Zoom         ZoomConfig
+	Drive        DriveConfig
 	Notification NotificationConfig
-	CORS        CORSConfig
+	CORS         CORSConfig
 }
 
 // ServerConfig holds server-related configuration
@@ -84,8 +84,10 @@ func Load() (*Config, error) {
 
 // Validate validates the configuration
 func (c *Config) Validate() error {
+	// Gemini API Key is optional for basic functionality
+	// If not provided, transaction extraction won't work but other features will
 	if c.Gemini.APIKey == "" {
-		return errors.New("GEMINI_API_KEY environment variable is required")
+		log.Println("⚠️  WARNING: GEMINI_API_KEY not set - transaction extraction will not work")
 	}
 
 	// Optional validation for meeting functionality

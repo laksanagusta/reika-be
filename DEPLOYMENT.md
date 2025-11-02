@@ -7,7 +7,7 @@
 - Access to container registry (Docker Hub, AWS ECR, GCR, etc.)
 - `.env` file with required environment variables
 
-### Quick Start (Recommended)
+### Quick Start
 
 1. **Build Docker Image**
    ```bash
@@ -33,6 +33,18 @@
    ./push.sh latest your-registry.com
    ```
 
+4. **Run with Environment Variables**
+   ```bash
+   # Option A: Using .env file
+   docker run -p 5002:5002 --env-file .env your-registry.com/reika-backend:latest
+
+   # Option B: Inline environment variables
+   docker run -p 5002:5002 \
+     -e GEMINI_API_KEY=your-gemini-api-key \
+     -e CORS_ALLOW_ORIGINS=https://yourdomain.com \
+     your-registry.com/reika-backend:latest
+   ```
+
 ### Manual Commands
 
 #### Build Only
@@ -51,9 +63,65 @@ docker push your-registry.com/reika-backend:latest
 docker run -p 5002:5002 --env-file .env your-registry.com/reika-backend:latest
 ```
 
+## Production Deployment
+
+### Option 1: Docker Compose (Production)
+
+Create `docker-compose.prod.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  reika-backend:
+    image: your-registry.com/reika-backend:latest
+    container_name: reika-app
+    ports:
+      - "5002:5002"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PORT=5002
+      - CORS_ALLOW_ORIGINS=https://yourdomain.com
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5002/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+```
+
+Run with:
+```bash
+# Create .env file with your API key
+echo "GEMINI_API_KEY=your-actual-api-key" > .env
+
+# Deploy
+docker-compose -f docker-compose.prod.yml up -d
+
+# Check logs
+docker-compose -f docker-compose.prod.yml logs -f
+```
+
+### Option 2: Docker Run (Production Server)
+
+```bash
+# Pull image
+docker pull your-registry.com/reika-backend:latest
+
+# Run with environment variables
+docker run -d \
+  --name reika-app \
+  --restart always \
+  -p 5002:5002 \
+  -e GEMINI_API_KEY=your-gemini-api-key \
+  -e CORS_ALLOW_ORIGINS=https://yourdomain.com \
+  your-registry.com/reika-backend:latest
+```
+
 ## Cloud Deployment
 
-### Option 1: Using Docker (Linux Server)
+### Option 3: Using Docker (Linux Server)
 
 1. **Install Docker on server:**
 ```bash
@@ -206,6 +274,29 @@ CORS_ALLOW_ORIGINS=http://localhost:3000
 - **URL:** `/api/health`
 - **Method:** GET
 - **Response:** `{"status": "healthy"}`
+
+## Environment Variables & Behaviour
+
+### Without GEMINI_API_KEY
+The application will start and run normally, but:
+- ✅ Health check endpoint works
+- ✅ Basic server functionality works
+- ❌ Transaction extraction endpoints will return error: `GEMINI_API_KEY is not configured`
+
+### With GEMINI_API_KEY
+All functionality works normally including transaction extraction.
+
+### Recommended for Development
+```bash
+# Run without API key first to test
+docker run -p 5002:5002 reika-backend:latest
+
+# Test health endpoint
+curl http://localhost:5002/api/health
+
+# Then run with API key for full functionality
+docker run -p 5002:5002 --env-file .env reika-backend:latest
+```
 
 ### Container Health Check
 

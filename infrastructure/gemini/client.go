@@ -42,6 +42,11 @@ func (c *Client) ExtractFromDocuments(ctx context.Context, documents []transacti
 		return nil, errors.New("no documents provided")
 	}
 
+	// Check if API key is configured
+	if c.apiKey == "" {
+		return nil, errors.New("GEMINI_API_KEY is not configured. Please set the environment variable and restart the application")
+	}
+
 	// Check if context is already cancelled
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("context cancelled before starting API call: %w", err)

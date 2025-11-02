@@ -1,7 +1,7 @@
 # Variables
 APP_NAME := reika
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "latest")
-REGISTRY := laksanagusta
+REGISTRY := laksanadika
 IMAGE_NAME := $(REGISTRY)/$(APP_NAME)
 
 # Docker commands
