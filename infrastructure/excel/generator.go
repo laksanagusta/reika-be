@@ -3,6 +3,7 @@ package excel
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -987,7 +988,6 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	// Set T1 cell to 1 for VLOOKUP reference
 	if err := g.file.SetCellValue(sheetName, "T1", 1); err != nil {
 		return err
 	}
@@ -1440,6 +1440,21 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
+	terbilang, err := g.file.CalcCellValue(sheetName, "M24")
+	if err != nil {
+		return err
+	}
+
+	valInt, err := strconv.ParseInt(terbilang, 10, 64)
+	if err != nil {
+		return err
+	}
+	terbilang = Terbilang(valInt)
+
+	if err := g.file.SetCellValue(sheetName, "D25", terbilang); err != nil {
+		return err
+	}
+
 	if err := g.file.SetCellStyle(sheetName, "A25", "A25", g.dynamicStyle([]string{}, false, true, 2, "left", 0)); err != nil {
 		return err
 	}
@@ -1521,7 +1536,10 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A29", "C29", g.dynamicStyle([]string{}, true, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A29", "C29", g.dynamicStyle([]string{}, true, false, 2, "left", 3)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "M24", "M24", g.dynamicStyle([]string{"top", "bottom"}, true, false, 2, "right", 3)); err != nil {
 		return err
 	}
 	if err := g.file.SetCellStyle(sheetName, "O29", "P29", g.dynamicStyle([]string{}, true, false, 2, "left", 3)); err != nil {
@@ -1758,7 +1776,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if err := g.file.SetCellStyle(sheetName, "D74", "D74", g.dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "center", 0)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "O74", "O74", g.dynamicStyle([]string{"top", "bottom", "left", "right"}, true, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "O74", "O74", g.dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "left", 0)); err != nil {
 		return err
 	}
 	if err := g.file.SetCellStyle(sheetName, "S74", "S74", g.dynamicStyle([]string{"top", "bottom", "right"}, false, false, 2, "left", 0)); err != nil {
@@ -1814,6 +1832,36 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 	if err := g.file.SetCellStyle(sheetName, "A5", "L5", g.dynamicStyle([]string{"bottom"}, true, false, 1, "center", 0)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A55", "P65", g.dynamicStyle([]string{}, false, false, 0, "left", 0)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A76", "P86", g.dynamicStyle([]string{}, false, false, 0, "left", 0)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A12", "A23", g.dynamicStyle([]string{"left"}, false, false, 2, "center", 0)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A14", "A14", g.dynamicStyle([]string{"left"}, false, false, 2, "center", 0)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A22", "A22", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A68", "A73", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A74", "A74", g.dynamicStyle([]string{"left", "top", "bottom"}, false, false, 2, "left", 0)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A24", "A24", g.dynamicStyle([]string{"left", "top", "bottom"}, false, false, 2, "left", 0)); err != nil {
 		return err
 	}
 
@@ -1898,8 +1946,8 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		Bottom:       utils.ToPtr(0.3543307),
 		Header:       utils.ToPtr(0.3149606),
 		Footer:       utils.ToPtr(0.3149606),
-		Horizontally: &excelizeTrue, // center horizontal
-		Vertically:   &excelizeTrue, // set true kalau mau center vertical juga
+		Horizontally: &excelizeTrue,
+		Vertically:   &excelizeTrue,
 	})
 
 	zoomScale := 154.0
@@ -1907,9 +1955,16 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		ZoomScale: &zoomScale,
 	})
 
+	_ = g.file.DeleteDefinedName(&excelize.DefinedName{
+		Name:  "_xlnm.Print_Area",
+		Scope: sheetName,
+	})
+
+	ref := fmt.Sprintf("'%s'!$A$1:$S$91", sheetName)
+
 	if err := g.file.SetDefinedName(&excelize.DefinedName{
 		Name:     "_xlnm.Print_Area",
-		RefersTo: sheetName + "!$A$1:$S$91",
+		RefersTo: ref,
 		Scope:    sheetName,
 	}); err != nil {
 		return err
@@ -1918,16 +1973,13 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	return nil
 }
 
-// GenerateRecapExcel creates an Excel file based on transaction data
 func (g *Generator) GenerateRecapExcel(req dto.RecapReportDTO) (*bytes.Buffer, error) {
-	// Validate input data
 	if len(req.Assignees) == 0 {
 		return nil, fmt.Errorf("no assignees provided")
 	}
 
 	var err error
 	sheetName := "PEMANTAUAN REKAP UANG MUKA"
-	// Remove the default sheet created by NewFile
 	g.file.DeleteSheet("Sheet1")
 	if err = g.file.SetSheetName(g.file.GetSheetName(0), sheetName); err != nil {
 		return nil, err
@@ -1941,7 +1993,6 @@ func (g *Generator) GenerateRecapExcel(req dto.RecapReportDTO) (*bytes.Buffer, e
 		return nil, err
 	}
 
-	// Data starting row
 	currentRow := 11
 	if currentRow, err = g.generateTableData(sheetName, req, currentRow); err != nil {
 		return nil, err
@@ -2005,7 +2056,6 @@ func (g *Generator) GenerateRecapExcel(req dto.RecapReportDTO) (*bytes.Buffer, e
 		return nil, err
 	}
 
-	// Save the Excel file to a buffer
 	var b bytes.Buffer
 	if err = g.file.Write(&b); err != nil {
 		return nil, fmt.Errorf("failed to write excel to buffer: %w", err)
