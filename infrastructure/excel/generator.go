@@ -803,7 +803,7 @@ func (g *Generator) generateSummaryRow(sheetName string, currentRow int) error {
 			return err
 		}
 
-		if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("B%d", totalRow+1), fmt.Sprintf("B%d", totalRow+3), g.dynamicStyle([]string{"top", "right", "bottom", "left"}, true, false, 1, "left", 0)); err != nil {
+		if err := g.file.SetCellStyle(sheetName, fmt.Sprintf("B%d", totalRow+1), fmt.Sprintf("B%d", totalRow+3), g.dynamicStyle([]string{"top", "right", "bottom", "left"}, true, false, 1, "left", 0, false)); err != nil {
 			return err
 		}
 	} else {
@@ -853,7 +853,7 @@ func (g *Generator) generateSignatureRow(sheetName string, currentRow int) error
 		totalRow += 3
 	}
 
-	err := g.file.SetCellStyle(sheetName, fmt.Sprintf("B%d", totalRow), fmt.Sprintf("L%d", totalRow+2), g.dynamicStyle([]string{"top", "right", "bottom", "left"}, false, false, 0, "left", 0))
+	err := g.file.SetCellStyle(sheetName, fmt.Sprintf("B%d", totalRow), fmt.Sprintf("L%d", totalRow+2), g.dynamicStyle([]string{"top", "right", "bottom", "left"}, false, false, 0, "left", 0, false))
 	if err != nil {
 		return err
 	}
@@ -1193,9 +1193,17 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if err := g.file.SetCellValue(sheetName, "C13", "Uang harian :"); err != nil {
 		return err
 	}
-	if err := g.file.SetCellFormula(sheetName, "C14", "=VLOOKUP($T$1,'PEMANTAUAN REKAP UANG MUKA'!$A$11:$AC$100,8,FALSE)"); err != nil {
-		return err
+
+	if sheetName == "KW RAMPUNG" {
+		if err := g.file.SetCellFormula(sheetName, "C14", "=VLOOKUP($T$1,'PEMANTAUAN REKAP RAMPUNG'!$A$11:$AC$100,8,FALSE)"); err != nil {
+			return err
+		}
+	} else {
+		if err := g.file.SetCellFormula(sheetName, "C14", "=VLOOKUP($T$1,'PEMANTAUAN REKAP UANG MUKA'!$A$11:$AC$100,8,FALSE)"); err != nil {
+			return err
+		}
 	}
+
 	if err := g.file.SetCellValue(sheetName, "D14", "hr"); err != nil {
 		return err
 	}
@@ -1212,8 +1220,14 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellFormula(sheetName, "M14", "=VLOOKUP($T$1,'PEMANTAUAN REKAP UANG MUKA'!$A$11:$AC$12,11,FALSE)"); err != nil {
-		return err
+	if sheetName == "KW RAMPUNG" {
+		if err := g.file.SetCellFormula(sheetName, "M14", "=VLOOKUP($T$1,'PEMANTAUAN REKAP RAMPUNG'!$A$11:$AC$100,11,FALSE)"); err != nil {
+			return err
+		}
+	} else {
+		if err := g.file.SetCellFormula(sheetName, "M14", "=VLOOKUP($T$1,'PEMANTAUAN REKAP UANG MUKA'!$A$11:$AC$100,11,FALSE)"); err != nil {
+			return err
+		}
 	}
 
 	if err := g.file.SetCellStyle(sheetName, "M14", "M14", currencyStyle); err != nil {
@@ -1238,8 +1252,8 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if err := g.file.SetCellValue(sheetName, "L17", "Rp."); err != nil {
 		return err
 	}
-	if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
-		if err := g.file.SetCellFormula(sheetName, "M17", "=VLOOKUP($T$1,'PEMANTAUAN REKAP RAMPUNG'!$A$11:$AC$16,100,FALSE)"); err != nil {
+	if sheetName == "KW RAMPUNG" {
+		if err := g.file.SetCellFormula(sheetName, "M17", "=VLOOKUP($T$1,'PEMANTAUAN REKAP RAMPUNG'!$A$11:$AC$100,20,FALSE)"); err != nil {
 			return err
 		}
 	} else {
@@ -1265,7 +1279,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
+	if sheetName == "KW RAMPUNG" {
 		if err := g.file.SetCellFormula(sheetName, "M19", "=VLOOKUP($T$1,'PEMANTAUAN REKAP RAMPUNG'!$A$11:$AC$100,17,FALSE)"); err != nil {
 			return err
 		}
@@ -1286,7 +1300,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
+	if sheetName == "KW RAMPUNG" {
 		if err := g.file.SetCellFormula(sheetName, "M20", "=VLOOKUP($T$1,'PEMANTAUAN REKAP RAMPUNG'!$A$11:$AC$100,18,FALSE)"); err != nil {
 			return err
 		}
@@ -1307,7 +1321,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if sheetName == "PEMANTAUAN REKAP RAMPUNG" {
+	if sheetName == "KW RAMPUNG" {
 		if err := g.file.SetCellFormula(sheetName, "C22", "=VLOOKUP($T$1,'PEMANTAUAN REKAP RAMPUNG'!$A$11:$AC$100,12,FALSE)"); err != nil {
 			return err
 		}
@@ -1322,9 +1336,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 			return err
 		}
 	}
-	if err := g.file.SetCellValue(sheetName, "D22", "mlm"); err != nil {
-		return err
-	}
+
 	if err := g.file.SetCellValue(sheetName, "E22", "x"); err != nil {
 		return err
 	}
@@ -1349,16 +1361,16 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "C12", "C24", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "C12", "C24", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "L12", "L24", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "L12", "L24", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "O12", "O24", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "O12", "O24", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "S12", "S24", g.dynamicStyle([]string{"right"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "S12", "S24", g.dynamicStyle([]string{"right"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
 
@@ -1395,25 +1407,25 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if err := g.file.SetCellStyle(sheetName, "C24", "C24", kwHeaderStyle); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A24", "B24", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A24", "B24", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "D24", "K24", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "D24", "K24", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "M24", "N24", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left", 3)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "M24", "N24", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left", 3, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "L24", "L24", g.dynamicStyle([]string{"top", "bottom", "left"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "L24", "L24", g.dynamicStyle([]string{"top", "bottom", "left"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "P24", "R24", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "P24", "R24", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "O24", "O24", g.dynamicStyle([]string{"top", "bottom", "left"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "O24", "O24", g.dynamicStyle([]string{"top", "bottom", "left"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "S24", "S24", g.dynamicStyle([]string{"top", "bottom", "right"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "S24", "S24", g.dynamicStyle([]string{"top", "bottom", "right"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
 
@@ -1428,15 +1440,15 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "M24", "M24", g.dynamicStyle([]string{"top", "bottom"}, true, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "M24", "M24", g.dynamicStyle([]string{"top", "bottom"}, true, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "L24", "L24", g.dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "L24", "L24", g.dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellValue(sheetName, "A25", "TERBILANG"); err != nil {
+	if err := g.file.SetCellValue(sheetName, "A25", "TERBILANG:"); err != nil {
 		return err
 	}
 
@@ -1452,10 +1464,6 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	terbilang = Terbilang(valInt)
 
 	if err := g.file.SetCellValue(sheetName, "D25", terbilang); err != nil {
-		return err
-	}
-
-	if err := g.file.SetCellStyle(sheetName, "A25", "A25", g.dynamicStyle([]string{}, false, true, 2, "left", 0)); err != nil {
 		return err
 	}
 
@@ -1529,31 +1537,31 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A28", "S35", g.dynamicStyle([]string{}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A28", "S35", g.dynamicStyle([]string{}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A28", "S35", g.dynamicStyle([]string{}, false, false, 2, "left", 0)); err != nil {
-		return err
-	}
-
-	if err := g.file.SetCellStyle(sheetName, "A29", "C29", g.dynamicStyle([]string{}, true, false, 2, "left", 3)); err != nil {
-		return err
-	}
-	if err := g.file.SetCellStyle(sheetName, "M24", "M24", g.dynamicStyle([]string{"top", "bottom"}, true, false, 2, "right", 3)); err != nil {
-		return err
-	}
-	if err := g.file.SetCellStyle(sheetName, "O29", "P29", g.dynamicStyle([]string{}, true, false, 2, "left", 3)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A28", "S35", g.dynamicStyle([]string{}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A35", "S35", g.dynamicStyle([]string{"bottom"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A29", "C29", g.dynamicStyle([]string{}, true, false, 2, "left", 3, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "M24", "M24", g.dynamicStyle([]string{"top", "bottom"}, true, false, 2, "right", 3, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "O29", "P29", g.dynamicStyle([]string{}, true, false, 2, "left", 3, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A35", "S35", g.dynamicStyle([]string{"bottom"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
 
 	if err := g.file.SetCellValue(sheetName, "A36", "PERHITUNGAN SPD UANG MUKA"); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A36", "A36", g.dynamicStyle([]string{}, true, false, 0, "center", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A36", "A36", g.dynamicStyle([]string{}, true, false, 0, "center", 0, false)); err != nil {
 		return err
 	}
 
@@ -1610,11 +1618,11 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A37", "L40", g.dynamicStyle([]string{}, true, false, 0, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A37", "L40", g.dynamicStyle([]string{}, true, false, 0, "left", 0, false)); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "K37", "L39", g.dynamicStyle([]string{}, true, false, 0, "left", 3)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "K37", "L39", g.dynamicStyle([]string{}, true, false, 0, "left", 3, false)); err != nil {
 		return err
 	}
 
@@ -1637,7 +1645,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A50", "S50", g.dynamicStyle([]string{"bottom"}, false, false, 8, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A50", "S50", g.dynamicStyle([]string{"bottom"}, false, false, 8, "left", 0, false)); err != nil {
 		return err
 	}
 
@@ -1649,7 +1657,7 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A53", "A53", g.dynamicStyle([]string{}, true, false, 0, "center", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A53", "A53", g.dynamicStyle([]string{}, true, false, 0, "center", 0, false)); err != nil {
 		return err
 	}
 
@@ -1720,14 +1728,14 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A67", "S67", g.dynamicStyle([]string{"top", "right", "bottom", "left"}, true, false, 2, "center", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A67", "S67", g.dynamicStyle([]string{"top", "right", "bottom", "left"}, true, false, 2, "center", 0, false)); err != nil {
 		return err
 	}
 
 	if err := g.file.SetCellValue(sheetName, "B69", "1"); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "B69", "B69", g.dynamicStyle([]string{}, false, false, 0, "center", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "B69", "B69", g.dynamicStyle([]string{}, false, false, 0, "center", 0, false)); err != nil {
 		return err
 	}
 	if err := g.file.SetCellValue(sheetName, "D69", "Transport :"); err != nil {
@@ -1761,25 +1769,25 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if err := g.file.MergeCell(sheetName, "D74", "N74"); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "D68", "D73", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "D68", "D73", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "O68", "O73", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "O68", "O73", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "S68", "S73", g.dynamicStyle([]string{"right"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "S68", "S73", g.dynamicStyle([]string{"right"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A74", "S74", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A74", "S74", g.dynamicStyle([]string{"top", "bottom"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "D74", "D74", g.dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "center", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "D74", "D74", g.dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "center", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "O74", "O74", g.dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "O74", "O74", g.dynamicStyle([]string{"top", "bottom", "left"}, true, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "S74", "S74", g.dynamicStyle([]string{"top", "bottom", "right"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "S74", "S74", g.dynamicStyle([]string{"top", "bottom", "right"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
 
@@ -1828,40 +1836,44 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	if err := g.file.SetCellValue(sheetName, "O90", expenditureTreasurerId); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A89", "S89", g.dynamicStyle([]string{}, true, false, 0, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A89", "S89", g.dynamicStyle([]string{}, true, false, 0, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A5", "L5", g.dynamicStyle([]string{"bottom"}, true, false, 1, "center", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A5", "L5", g.dynamicStyle([]string{"bottom"}, true, false, 1, "center", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A55", "P65", g.dynamicStyle([]string{}, false, false, 0, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A55", "P65", g.dynamicStyle([]string{}, false, false, 0, "left", 0, false)); err != nil {
 		return err
 	}
-	if err := g.file.SetCellStyle(sheetName, "A76", "P86", g.dynamicStyle([]string{}, false, false, 0, "left", 0)); err != nil {
-		return err
-	}
-
-	if err := g.file.SetCellStyle(sheetName, "A12", "A23", g.dynamicStyle([]string{"left"}, false, false, 2, "center", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A76", "P86", g.dynamicStyle([]string{}, false, false, 0, "left", 0, false)); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A14", "A14", g.dynamicStyle([]string{"left"}, false, false, 2, "center", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A12", "A23", g.dynamicStyle([]string{"left"}, false, false, 2, "center", 0, false)); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A22", "A22", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A14", "A14", g.dynamicStyle([]string{"left"}, false, false, 2, "center", 0, false)); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A68", "A73", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A22", "A22", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A74", "A74", g.dynamicStyle([]string{"left", "top", "bottom"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A68", "A73", g.dynamicStyle([]string{"left"}, false, false, 2, "left", 0, false)); err != nil {
 		return err
 	}
 
-	if err := g.file.SetCellStyle(sheetName, "A24", "A24", g.dynamicStyle([]string{"left", "top", "bottom"}, false, false, 2, "left", 0)); err != nil {
+	if err := g.file.SetCellStyle(sheetName, "A74", "A74", g.dynamicStyle([]string{"left", "top", "bottom"}, false, false, 2, "left", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A24", "A24", g.dynamicStyle([]string{"left", "top", "bottom"}, false, false, 2, "left", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A25", "D25", g.dynamicStyle([]string{}, false, true, 2, "left", 0, false)); err != nil {
 		return err
 	}
 
@@ -1973,6 +1985,783 @@ func (g *Generator) generateKw(sheetName string, req dto.RecapReportDTO) error {
 	return nil
 }
 
+func (g *Generator) generateSppd(sheetName string) error {
+	if _, err := g.file.NewSheet(sheetName); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "F1", "LAMPIRAN I"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "F2", "PERATURAN MENTERI KEUANGAN REPUBLIK INDONESIA NOMOR 113/PMK.05/2012"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "F3", "Tentang"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "F4", "PERJALANAN DINAS JABATAN DALAM NEGERI BAGI PEJABAT NEGARA, PEGAWAI NEGERI, DAN PEGAWAI TIDAK TETAP"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "A8", "KEMENTERIAN KESEHATAN REPUBLIK INDONNESIA"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "A9", "DIREKTORAT JENDERAL"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "A10", "PENANGGULANGAN PENYAKIT"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "F10", "Lembar ke"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "G10", ": ………………………………………"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "F11", "Kode No"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "G11", ": ………………………………………"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "F12", "Nomor"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "G12", ":"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "H12", "=VLOOKUP($K$20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AC$100,28,FALSE)"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "A12", "J A K A R T A"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "A14", "SURAT PERJALANAN DINAS (SPD)"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "A16", "1."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B16", "Pejabat Pembuat Komitmen I"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "D16", "=F63"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "A19", "2."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B19", "Nama/NIP Pegawai yang melaksanakan"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "D19", "=VLOOKUP($K$20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AC$100,2,FALSE)"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "B20", "perjalanan dinas"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "D20", "NIP"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "E20", "=VLOOKUP($K$20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AC$100,3,FALSE)"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "B22", "a."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "C22", "Pangkat dan Golongan"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "D22", "a."); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellFormula(sheetName, "E22", "=VLOOKUP($K$20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AG$100,33,FALSE)"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "F22", "=VLOOKUP($K$20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AG$34,5,FALSE)"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "A23", "3."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B23", "b."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "C23", "Jabatan/Instansi"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "D23", "b."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "E23", "=VLOOKUP($K$20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AC$100,4,FALSE)"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "B24", "c."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "C24", "Tingkat Biaya Perjalanan Dinas"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "D24", "c."); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "A27", "4."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B27", "Maksud perjalanan dinas"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "D26", "=VLOOKUP($K$20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AJ$100,35,FALSE)"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "A29", "5."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B29", "Alat angkut yang dipergunakan"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "D29", "=VLOOKUP($K$20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AJ$100,34,FALSE)"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "A31", "6."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B31", "a."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "C31", "Tempat Berangkat"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "D31", "a."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "E31", "Jakarta"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "B32", "b."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "C32", "Tempat Tujuan"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "E32", "=VLOOKUP($K$20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AC$100,6,FALSE)"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "B35", "a."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "C35", "Lamanya perjalanan dinas"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "D35", "a."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "E35", `=VLOOKUP(K20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$Y$100,8,0)&" hari"`); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "A36", "7."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B36", "b."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "C36", "Tanggal Berangkat"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "D36", "b."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "E36", "=VLOOKUP(K20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AG$100,30,0)"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "B37", "c."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "C37", "Tanggal harus Kembali/tiba di"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "D37", "c."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "E37", "=VLOOKUP(K20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AG$100,31,0)"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "C38", " tempat baru *)"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "B39", "Pengikut  :           N  a  m  a"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "E39", "Tanggal Lahir"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "H39", "Keterangan"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "B39", "Pengikut  :           N  a  m  a           "); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B40", 1); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B41", 2); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B42", 3); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "A42", "8."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B43", 4); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B44", 5); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "A47", "9."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B46", "Pembebanan Anggaran"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B47", "a."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "C47", "Instansi"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "D47", "a."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "E47", "Sekretariat Ditjen Pencegahan dan Pengendalian Penyakit"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "B48", "b."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "C48", "Akun"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "D48", "b."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "E48", "024.05.WA.4815.EBD.953.501.B.524111"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "A51", "10."); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B51", "Keterangan lain-lain"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "B53", "*coret yang tidak perlu"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "F55", "Dikeluarkan di"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "G55", ":"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "H55", "Jakarta"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "F56", "Tanggal"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "G56", ":"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellFormula(sheetName, "H56", "=VLOOKUP($K$20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AC$34,29,FALSE)"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "F58", "Pejabat Pembuat Komitmen II"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "F59", "Unit Kerja Setditjen Penanggulangan Penyakit"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "F63", "Ruly Wahyuni, SE, MKM"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellValue(sheetName, "F64", "NIP 197508142000032001"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellValue(sheetName, "K20", 1); err != nil {
+		return err
+	}
+
+	if err := g.file.SetColWidth(sheetName, "A", "A", 4.5); err != nil {
+		return err
+	}
+
+	if err := g.file.SetColWidth(sheetName, "B", "B", 2.6); err != nil {
+		return err
+	}
+
+	if err := g.file.SetColWidth(sheetName, "C", "C", 31.6); err != nil {
+		return err
+	}
+	if err := g.file.SetColWidth(sheetName, "D", "D", 3.5); err != nil {
+		return err
+	}
+	if err := g.file.SetColWidth(sheetName, "E", "E", 19.6); err != nil {
+		return err
+	}
+	if err := g.file.SetColWidth(sheetName, "F", "F", 13.6); err != nil {
+		return err
+	}
+	if err := g.file.SetColWidth(sheetName, "G", "G", 1.2); err != nil {
+		return err
+	}
+	if err := g.file.SetColWidth(sheetName, "H", "H", 13.3); err != nil {
+		return err
+	}
+	if err := g.file.SetColWidth(sheetName, "I", "I", 16.8); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A1", "I63", g.dynamicStyle([]string{}, false, false, 0, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A8", "A14", g.dynamicStyle([]string{}, true, false, 0, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A14", "A14", g.dynamicStyle([]string{}, true, false, 0, "center", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.MergeCell(sheetName, "A14", "I14"); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A16", "A16", g.dynamicStyle([]string{"left", "top", "right"}, false, false, 1, "center", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "B16", "C16", g.dynamicStyle([]string{"top"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D16", "D16", g.dynamicStyle([]string{"left", "top"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "E16", "H16", g.dynamicStyle([]string{"top"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I16", "I16", g.dynamicStyle([]string{"top", "right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "I17", "I17", g.dynamicStyle([]string{"bottom", "right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "B17", "C17", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D17", "D17", g.dynamicStyle([]string{"bottom", "left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "E17", "H17", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I17", "I17", g.dynamicStyle([]string{"bottom", "right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A17", "A17", g.dynamicStyle([]string{"bottom", "right", "left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A18", "B20", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "B18", "B20", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D18", "D20", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I18", "I20", g.dynamicStyle([]string{"right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A19", "A19", g.dynamicStyle([]string{"left"}, false, false, 1, "center", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A21", "A21", g.dynamicStyle([]string{"left", "bottom", "right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "B21", "C21", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D21", "D21", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "E21", "H21", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I21", "I21", g.dynamicStyle([]string{"bottom", "right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A22", "A24", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A23", "A23", g.dynamicStyle([]string{"left"}, false, false, 1, "center", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "B22", "A24", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D22", "D24", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I22", "I24", g.dynamicStyle([]string{"right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A25", "A25", g.dynamicStyle([]string{"bottom", "left", "right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "B25", "C25", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D25", "D25", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "E25", "H25", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I25", "I25", g.dynamicStyle([]string{"bottom", "right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A26", "A26", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "B26", "B26", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D26", "D27", g.dynamicStyle([]string{"left", "right", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D28", "D28", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A27", "A27", g.dynamicStyle([]string{"left"}, false, false, 1, "center", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "B27", "B27", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.MergeCell(sheetName, "D26", "I28"); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A28", "B28", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "C28", "C28", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "E28", "H28", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I26", "H27", g.dynamicStyle([]string{"right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I28", "H28", g.dynamicStyle([]string{"right", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A29", "B29", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "C29", "C29", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D29", "D29", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "E29", "H29", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I29", "I29", g.dynamicStyle([]string{"bottom", "right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A30", "A32", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "B30", "B32", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D30", "D32", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I30", "I32", g.dynamicStyle([]string{"right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A33", "B33", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "C33", "C33", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D33", "D33", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "E33", "H33", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I33", "I33", g.dynamicStyle([]string{"bottom", "right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A34", "B34", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D34", "D34", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I34", "I34", g.dynamicStyle([]string{"right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A35", "A37", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "B35", "B37", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D35", "D37", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I35", "I37", g.dynamicStyle([]string{"right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A38", "B38", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "C38", "C38", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D38", "D38", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "E38", "H38", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I38", "I38", g.dynamicStyle([]string{"bottom", "right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A39", "B39", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D39", "D39", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I39", "I39", g.dynamicStyle([]string{"right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A40", "A44", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "B40", "B44", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D40", "D44", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I40", "I44", g.dynamicStyle([]string{"right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A45", "B45", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "C45", "C45", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D45", "D45", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "E45", "H45", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I45", "I45", g.dynamicStyle([]string{"bottom", "right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A46", "B46", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D46", "D46", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I46", "I46", g.dynamicStyle([]string{"right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A47", "A48", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "B47", "B48", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D47", "D48", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I47", "I48", g.dynamicStyle([]string{"right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A49", "B49", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "C49", "C49", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D49", "D49", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "E49", "H49", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I49", "I49", g.dynamicStyle([]string{"bottom", "right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A50", "B50", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D50", "D50", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I50", "I50", g.dynamicStyle([]string{"right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A51", "A51", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "B51", "B51", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D51", "D51", g.dynamicStyle([]string{"left"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I51", "I51", g.dynamicStyle([]string{"right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A52", "B52", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "C52", "C52", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "D52", "D52", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "E52", "H52", g.dynamicStyle([]string{"bottom"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "I52", "I52", g.dynamicStyle([]string{"bottom", "right"}, false, false, 1, "left", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetCellStyle(sheetName, "A31", "A31", g.dynamicStyle([]string{"left"}, false, false, 1, "center", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A29", "A29", g.dynamicStyle([]string{"left", "bottom"}, false, false, 1, "center", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A36", "A36", g.dynamicStyle([]string{"left"}, false, false, 1, "center", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A42", "A42", g.dynamicStyle([]string{"left"}, false, false, 1, "center", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A47", "A47", g.dynamicStyle([]string{"left"}, false, false, 1, "center", 0, false)); err != nil {
+		return err
+	}
+	if err := g.file.SetCellStyle(sheetName, "A51", "A51", g.dynamicStyle([]string{"left"}, false, false, 1, "center", 0, false)); err != nil {
+		return err
+	}
+
+	if err := g.file.SetRowHeight(sheetName, 2, 24.8); err != nil {
+		return err
+	}
+	if err := g.file.SetRowHeight(sheetName, 4, 36); err != nil {
+		return err
+	}
+
+	portrait := "portrait"
+	excelizeOne := 1
+	excelizeTrue := true
+	if err := g.file.SetPageLayout(sheetName, &excelize.PageLayoutOptions{
+		Size:        utils.ToPtr(14),
+		Orientation: &portrait,
+		FitToWidth:  &excelizeOne,
+		FitToHeight: &excelizeOne,
+	}); err != nil {
+		panic(err)
+	}
+
+	_ = g.file.SetPageMargins(sheetName, &excelize.PageLayoutMarginsOptions{
+		Left:         utils.ToPtr(0.2362204),
+		Right:        utils.ToPtr(0.2362204),
+		Top:          utils.ToPtr(0.3543307),
+		Bottom:       utils.ToPtr(0.3543307),
+		Header:       utils.ToPtr(0.3149606),
+		Footer:       utils.ToPtr(0.3149606),
+		Horizontally: &excelizeTrue,
+		Vertically:   &excelizeTrue,
+	})
+
+	zoomScale := 136.0
+	_ = g.file.SetSheetView(sheetName, 0, &excelize.ViewOptions{
+		ZoomScale: &zoomScale,
+	})
+
+	_ = g.file.DeleteDefinedName(&excelize.DefinedName{
+		Name:  "_xlnm.Print_Area",
+		Scope: sheetName,
+	})
+
+	ref := fmt.Sprintf("'%s'!$A$1:$I$64", sheetName)
+
+	if err := g.file.SetDefinedName(&excelize.DefinedName{
+		Name:     "_xlnm.Print_Area",
+		RefersTo: ref,
+		Scope:    sheetName,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (g *Generator) GenerateRecapExcel(req dto.RecapReportDTO) (*bytes.Buffer, error) {
 	if len(req.Assignees) == 0 {
 		return nil, fmt.Errorf("no assignees provided")
@@ -2046,12 +2835,14 @@ func (g *Generator) GenerateRecapExcel(req dto.RecapReportDTO) (*bytes.Buffer, e
 		return nil, err
 	}
 
-	if _, err = g.file.NewSheet("KW RAMPUNG"); err != nil {
+	kwRampung := "KW RAMPUNG"
+	err = g.generateKw(kwRampung, req)
+	if err != nil {
 		return nil, err
 	}
 
-	kwRampung := "KW RAMPUNG"
-	err = g.generateKw(kwRampung, req)
+	sppd := "SPPD"
+	err = g.generateSppd(sppd)
 	if err != nil {
 		return nil, err
 	}
@@ -2064,7 +2855,7 @@ func (g *Generator) GenerateRecapExcel(req dto.RecapReportDTO) (*bytes.Buffer, e
 	return &b, nil
 }
 
-func (g *Generator) dynamicStyle(borderTypes []string, bold bool, italic bool, borderStyle int, horizontal string, numFmt int) int {
+func (g *Generator) dynamicStyle(borderTypes []string, bold bool, italic bool, borderStyle int, horizontal string, numFmt int, wrapText bool) int {
 	var borders []excelize.Border
 
 	for _, side := range borderTypes {
@@ -2098,6 +2889,7 @@ func (g *Generator) dynamicStyle(borderTypes []string, bold bool, italic bool, b
 
 	styleModel := &excelize.Style{
 		Alignment: &excelize.Alignment{
+			WrapText:   wrapText,
 			Horizontal: horizontal,
 			Vertical:   "center",
 		},
