@@ -26,10 +26,7 @@ const (
 	payerId = "198510312008012003"
 )
 
-type Generator struct {
-	file   *excelize.File
-	styles map[string]int
-}
+type Generator struct{}
 
 func NewGenerator() *Generator {
 	return &Generator{}
