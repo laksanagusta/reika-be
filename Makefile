@@ -7,7 +7,7 @@ IMAGE_NAME := $(REGISTRY)/$(APP_NAME)
 # Docker commands
 .PHONY: build-image
 build-image:
-	docker build -t $(IMAGE_NAME):$(VERSION) .
+	docker build --no-cache --platform linux/amd64 -t $(IMAGE_NAME):$(VERSION) .
 	docker tag $(IMAGE_NAME):$(VERSION) $(IMAGE_NAME):latest
 
 .PHONY: push-image
