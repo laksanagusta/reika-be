@@ -123,10 +123,10 @@ func (g *Generator) generateTableHeader(f *excelize.File, sheetName string) erro
 			Family: "Tahoma",
 		},
 		Border: []excelize.Border{
-			{Type: "left", Color: "000000", Style: 1},
-			{Type: "top", Color: "000000", Style: 1},
-			{Type: "bottom", Color: "000000", Style: 1},
-			{Type: "right", Color: "000000", Style: 1},
+			{Type: "left", Color: "000000", Style: 2},
+			{Type: "top", Color: "000000", Style: 2},
+			{Type: "bottom", Color: "000000", Style: 2},
+			{Type: "right", Color: "000000", Style: 2},
 		},
 	})
 	if err != nil {
@@ -185,30 +185,30 @@ func (g *Generator) generateTableHeader(f *excelize.File, sheetName string) erro
 	if err := f.SetCellValue(sheetName, "H8", "Uang Harian"); err != nil {
 		return err
 	}
-	if err := f.SetCellValue(sheetName, "H9", "Konstanta:"); err != nil {
+	if err := f.SetCellValue(sheetName, "H9", "Konstanta : 008448"); err != nil {
 		return err
 	}
-	if err := f.MergeCell(sheetName, "H9", "J9"); err != nil {
+	if err := f.MergeCell(sheetName, "H9", "K9"); err != nil {
 		return err
 	}
 
 	if err := f.SetCellValue(sheetName, "L8", "Penginapan"); err != nil {
 		return err
 	}
-	if err := f.SetCellValue(sheetName, "L9", "Konstanta:"); err != nil {
+	if err := f.SetCellValue(sheetName, "L9", "Konstanta : 008447"); err != nil {
 		return err
 	}
-	if err := f.MergeCell(sheetName, "L9", "N9"); err != nil {
+	if err := f.MergeCell(sheetName, "L9", "O9"); err != nil {
 		return err
 	}
 
 	if err := f.SetCellValue(sheetName, "P8", "Transport"); err != nil {
 		return err
 	}
-	if err := f.SetCellValue(sheetName, "P9", "Konstanta:"); err != nil {
+	if err := f.SetCellValue(sheetName, "P9", "Konstanta : 008446"); err != nil {
 		return err
 	}
-	if err := f.MergeCell(sheetName, "P9", "R9"); err != nil {
+	if err := f.MergeCell(sheetName, "P9", "T9"); err != nil {
 		return err
 	}
 
@@ -326,7 +326,11 @@ func (g *Generator) generateTableHeader(f *excelize.File, sheetName string) erro
 		}
 	}
 
-	if err := f.SetCellStyle(sheetName, "A8", "W10", headerStyle); err != nil {
+	if err := f.SetCellStyle(sheetName, "A8", "U10", headerStyle); err != nil {
+		return err
+	}
+
+	if err := f.SetCellStyle(sheetName, "H9", "T9", g.dynamicStyle(f, []string{"top", "bottom", "left", "right"}, true, false, 2, "left", 0, false, 0)); err != nil {
 		return err
 	}
 	return nil
@@ -378,10 +382,10 @@ func (g *Generator) generateTableData(f *excelize.File, sheetName string, req dt
 			Family: "Tahoma",
 		},
 		Border: []excelize.Border{
-			{Type: "left", Color: "000000", Style: 1},
-			{Type: "top", Color: "000000", Style: 1},
-			{Type: "bottom", Color: "000000", Style: 1},
-			{Type: "right", Color: "000000", Style: 1},
+			{Type: "left", Color: "000000", Style: 2},
+			{Type: "top", Color: "000000", Style: 2},
+			{Type: "bottom", Color: "000000", Style: 2},
+			{Type: "right", Color: "000000", Style: 2},
 		},
 	})
 	if err != nil {
@@ -398,10 +402,10 @@ func (g *Generator) generateTableData(f *excelize.File, sheetName string, req dt
 			Family: "Tahoma",
 		},
 		Border: []excelize.Border{
-			{Type: "left", Color: "000000", Style: 1},
-			{Type: "top", Color: "000000", Style: 1},
-			{Type: "bottom", Color: "000000", Style: 1},
-			{Type: "right", Color: "000000", Style: 1},
+			{Type: "left", Color: "000000", Style: 2},
+			{Type: "top", Color: "000000", Style: 2},
+			{Type: "bottom", Color: "000000", Style: 2},
+			{Type: "right", Color: "000000", Style: 2},
 		},
 		NumFmt: 3, // Indonesian thousand separator format (#,##0)
 	})
@@ -689,10 +693,10 @@ func (g *Generator) generateSummaryRow(f *excelize.File, sheetName string, curre
 			Family: "Tahoma",
 		},
 		Border: []excelize.Border{
-			{Type: "left", Color: "000000", Style: 1},
-			{Type: "top", Color: "000000", Style: 1},
-			{Type: "bottom", Color: "000000", Style: 1},
-			{Type: "right", Color: "000000", Style: 1},
+			{Type: "left", Color: "000000", Style: 2},
+			{Type: "top", Color: "000000", Style: 2},
+			{Type: "bottom", Color: "000000", Style: 2},
+			{Type: "right", Color: "000000", Style: 2},
 		},
 		NumFmt: 3,
 	})
@@ -708,10 +712,10 @@ func (g *Generator) generateSummaryRow(f *excelize.File, sheetName string, curre
 			Family: "Tahoma",
 		},
 		Border: []excelize.Border{
-			{Type: "left", Color: "000000", Style: 1},
-			{Type: "top", Color: "000000", Style: 1},
-			{Type: "bottom", Color: "000000", Style: 1},
-			{Type: "right", Color: "000000", Style: 1},
+			{Type: "left", Color: "000000", Style: 2},
+			{Type: "top", Color: "000000", Style: 2},
+			{Type: "bottom", Color: "000000", Style: 2},
+			{Type: "right", Color: "000000", Style: 2},
 		},
 		NumFmt: 3, // Indonesian thousand separator format (#,##0)
 	})
@@ -1979,7 +1983,7 @@ func (g *Generator) generateKw(f *excelize.File, sheetName string, req dto.Recap
 	return nil
 }
 
-func (g *Generator) generateSppd(f *excelize.File, sheetName string) error {
+func (g *Generator) generateSppd(f *excelize.File, sheetName string, req dto.RecapReportDTO) error {
 	if _, err := f.NewSheet(sheetName); err != nil {
 		return err
 	}
@@ -2120,7 +2124,7 @@ func (g *Generator) generateSppd(f *excelize.File, sheetName string) error {
 	if err := f.SetCellValue(sheetName, "B27", "Maksud perjalanan dinas"); err != nil {
 		return err
 	}
-	if err := f.SetCellFormula(sheetName, "D26", "=VLOOKUP($K$20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AJ$100,35,FALSE)"); err != nil {
+	if err := f.SetCellValue(sheetName, "D26", req.ActivityPurpose); err != nil {
 		return err
 	}
 
@@ -2294,7 +2298,7 @@ func (g *Generator) generateSppd(f *excelize.File, sheetName string) error {
 	if err := f.SetCellValue(sheetName, "G56", ":"); err != nil {
 		return err
 	}
-	if err := f.SetCellFormula(sheetName, "H56", "=VLOOKUP($K$20,'PEMANTAUAN REKAP RAMPUNG'!$A$8:$AC$34,29,FALSE)"); err != nil {
+	if err := f.SetCellValue(sheetName, "H56", req.SpdDate); err != nil {
 		return err
 	}
 	if err := f.SetCellValue(sheetName, "F58", "Pejabat Pembuat Komitmen II"); err != nil {
@@ -2722,6 +2726,18 @@ func (g *Generator) generateSppd(f *excelize.File, sheetName string) error {
 		return err
 	}
 
+	if err := f.SetCellStyle(sheetName, "F55", "H64", g.dynamicStyle(f, []string{}, false, false, 1, "left", 0, false, 9)); err != nil {
+		return err
+	}
+
+	if err := f.SetCellStyle(sheetName, "F58", "H63", g.dynamicStyle(f, []string{}, true, false, 1, "left", 0, false, 9)); err != nil {
+		return err
+	}
+
+	if err := f.SetCellStyle(sheetName, "D26", "D26", g.dynamicStyle(f, []string{}, false, false, 1, "left", 0, true, 9)); err != nil {
+		return err
+	}
+
 	if err := f.SetRowHeight(sheetName, 2, 24.8); err != nil {
 		return err
 	}
@@ -2885,7 +2901,7 @@ func (g *Generator) GenerateRecapExcel(req dto.RecapReportDTO) (*bytes.Buffer, e
 	}
 
 	sppd := "SPPD"
-	err = g.generateSppd(f, sppd)
+	err = g.generateSppd(f, sppd, req)
 	if err != nil {
 		return nil, err
 	}

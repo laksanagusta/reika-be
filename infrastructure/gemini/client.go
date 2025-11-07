@@ -126,7 +126,7 @@ Ekstrak setiap transaksi dan tampilkan dalam format JSON valid berikut ini:
   "spdDate": "YYYY-MM-DD", -> ambil dari file surat tugas
   "departureDate": "YYYY-MM-DD", -> ambil dari file surat tugas
   "returnDate": "YYYY-MM-DD", -> ambil dari file surat tugas
-  "receiptSignatureDate": "YYYY-MM-DD", -> ambil dari file surat tugas
+  "receiptSignatureDate": "Tanggal hari ini atau tanggal yang paling baru atau tanggal berjalan",
   "assignees": [
     {
       "name": "NAMA_PEGAWAI", -> ambil dari file surat tugas

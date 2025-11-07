@@ -150,7 +150,7 @@ func (r *RecapReportDTO) Validate() error {
 	if err := validation.ValidateStruct(r,
 		validation.Field(&r.StartDate, validation.Required, validation.Match(dateFormatRegex)),
 		validation.Field(&r.EndDate, validation.Required, validation.Match(dateFormatRegex)),
-		validation.Field(&r.ActivityPurpose, validation.Required, validation.Length(1, 200)),
+		validation.Field(&r.ActivityPurpose, validation.Required, validation.Length(1, 1000)),
 		validation.Field(&r.DestinationCity, validation.Required, validation.Length(1, 100)),
 		validation.Field(&r.SpdDate, validation.Required, validation.Match(dateFormatRegex)),
 		validation.Field(&r.DepartureDate, validation.Required, validation.Match(dateFormatRegex)),
