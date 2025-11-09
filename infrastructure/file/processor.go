@@ -32,13 +32,11 @@ type ProcessedFile struct {
 	MimeType string
 }
 
-// ProcessUploadedFile processes an uploaded file
 func (p *Processor) ProcessUploadedFile(fileHeader *multipart.FileHeader) (*ProcessedFile, error) {
 	if fileHeader == nil {
 		return nil, errors.New("file header is nil")
 	}
 
-	// Check file size
 	if fileHeader.Size > p.maxFileSize {
 		return nil, errors.New("file size exceeds maximum allowed size")
 	}
@@ -67,7 +65,6 @@ func (p *Processor) ProcessUploadedFile(fileHeader *multipart.FileHeader) (*Proc
 	}, nil
 }
 
-// ProcessMultipleFiles processes multiple uploaded files
 func (p *Processor) ProcessMultipleFiles(fileHeaders []*multipart.FileHeader) ([]*ProcessedFile, error) {
 	if len(fileHeaders) == 0 {
 		return nil, errors.New("no files provided")

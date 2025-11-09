@@ -88,7 +88,7 @@ func (tx *TransactionDTO) Validate(fieldPrefix string) error {
 func (tx *TransactionDTO) isValidTransactionType() bool {
 	normalizedType := strings.ToLower(tx.Type)
 	switch normalizedType {
-	case "accommodation", "transport", "other":
+	case "accommodation", "transport", "allowance", "other":
 		return true
 	}
 	return false

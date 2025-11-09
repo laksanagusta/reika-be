@@ -20,13 +20,11 @@ const (
 	geminiAPIURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 )
 
-// Client represents a Gemini API client
 type Client struct {
 	apiKey     string
 	httpClient *http.Client
 }
 
-// NewClient creates a new Gemini API client
 func NewClient(apiKey string) *Client {
 	return &Client{
 		apiKey: apiKey,
@@ -126,7 +124,6 @@ Ekstrak setiap transaksi dan tampilkan dalam format JSON valid berikut ini:
   "spdDate": "YYYY-MM-DD", -> ambil dari file surat tugas
   "departureDate": "YYYY-MM-DD", -> ambil dari file surat tugas
   "returnDate": "YYYY-MM-DD", -> ambil dari file surat tugas
-  "receiptSignatureDate": "Tanggal hari ini atau tanggal yang paling baru atau tanggal berjalan",
   "assignees": [
     {
       "name": "NAMA_PEGAWAI", -> ambil dari file surat tugas
@@ -137,8 +134,8 @@ Ekstrak setiap transaksi dan tampilkan dalam format JSON valid berikut ini:
       "transactions": [
         {
           "name": "NAMA_PEMESAN_TRANSAKSI",
-          "type": "accommodation | transport | other",
-          "subtype": "hotel | flight | train | taxi | ...",
+          "type": "accommodation | transport | other | allowance",
+          "subtype": "hotel | flight | train | taxi | daily_allowance",
           "amount": number,
           "total_night": number,
           "subtotal": number, -> hasil amount*total_night kalo dia accomodation tapi kalo selain itu langsung ambil dari amount aja
@@ -158,6 +155,47 @@ Ekstrak setiap transaksi dan tampilkan dalam format JSON valid berikut ini:
 - Jika nama pemesan di transaksi tersebut tidak tercantum di surat tugas, mohon assign ke salah satu nama yang ada di surat tugas.
 - Jangan menggunakan nama driver sebagai nama transaksi — gunakan nama pemesan.
 - Group semua transaksi di bawah setiap assignee.
+
+di bawah ini data uang harian aku minta untuk ambil datanya untuk di masukkan ke transactions sesuai dengan kota tujuannya yang ada di surat tugas misalnya dia di surabaya maka dia akan mengambil data jawa timur karena surabaya terletak di jawa timur dan jadikan datanya sebagai allowance
+NO,PROVINSI,SATUAN,LUAR KOTA,DALAM KOTA LEBIH DARI 8 JAM,DIKLAT
+1,ACEH,OH,Rp360.000,Rp140.000,Rp110.000
+2,SUMATRA UTARA,OH,Rp370.000,Rp150.000,Rp110.000
+3,RIAU,OH,Rp370.000,Rp150.000,Rp110.000
+4,KEPULAUAN RIAU,OH,Rp370.000,Rp150.000,Rp110.000
+5,JAMBI,OH,Rp370.000,Rp150.000,Rp110.000
+6,SUMATRA BARAT,OH,Rp380.000,Rp150.000,Rp110.000
+7,SUMATRA SELATAN,OH,Rp380.000,Rp150.000,Rp110.000
+8,LAMPUNG,OH,Rp380.000,Rp150.000,Rp110.000
+9,BENGKULU,OH,Rp380.000,Rp150.000,Rp110.000
+10,BANGKA BELITUNG,OH,Rp410.000,Rp160.000,Rp120.000
+11,BANTEN,OH,Rp370.000,Rp150.000,Rp110.000
+12,JAWA BARAT,OH,Rp430.000,Rp170.000,Rp130.000
+13,D.K.I. JAKARTA,OH,Rp530.000,Rp210.000,Rp160.000
+14,JAWA TENGAH,OH,Rp370.000,Rp150.000,Rp110.000
+15,D.I. YOGYAKARTA,OH,Rp420.000,Rp170.000,Rp130.000
+16,JAWA TIMUR,OH,Rp410.000,Rp160.000,Rp120.000
+17,BALI,OH,Rp480.000,Rp190.000,Rp140.000
+18,NUSA TENGGARA BARAT,OH,Rp440.000,Rp190.000,Rp130.000
+19,NUSA TENGGARA TIMUR,OH,Rp430.000,Rp170.000,Rp130.000
+20,KALIMANTAN BARAT,OH,Rp380.000,Rp150.000,Rp110.000
+21,KALIMANTAN TENGAH,OH,Rp360.000,Rp140.000,Rp110.000
+22,KALIMANTAN SELATAN,OH,Rp380.000,Rp150.000,Rp110.000
+23,KALIMANTAN TIMUR,OH,Rp430.000,Rp170.000,Rp130.000
+24,KALIMANTAN UTARA,OH,Rp430.000,Rp170.000,Rp130.000
+25,SULAWESI UTARA,OH,Rp370.000,Rp150.000,Rp110.000
+26,GORONTALO,OH,Rp370.000,Rp150.000,Rp110.000
+27,SULAWESI BARAT,OH,Rp410.000,Rp160.000,Rp120.000
+28,SULAWESI SELATAN,OH,Rp430.000,Rp170.000,Rp130.000
+29,SULAWESI TENGAH,OH,Rp370.000,Rp150.000,Rp110.000
+30,SULAWESI TENGGARA,OH,Rp380.000,Rp150.000,Rp110.000
+31,MALUKU,OH,Rp380.000,Rp150.000,Rp110.000
+32,MALUKU UTARA,OH,Rp430.000,Rp170.000,Rp130.000
+33,PAPUA,OH,Rp580.000,Rp230.000,Rp170.000
+34,PAPUA BARAT,OH,Rp480.000,Rp190.000,Rp140.000
+35,PAPUA BARAT DAYA,OH,Rp480.000,Rp190.000,Rp140.000
+36,PAPUA TENGAH,OH,Rp580.000,Rp230.000,Rp170.000
+37,PAPUA SELATAN,OH,Rp580.000,Rp230.000,Rp170.000
+38,PAPUA PEGUNUNGAN,OH,Rp580.000,Rp230.000,Rp170.000
 `
 }
 
@@ -179,7 +217,8 @@ func (c *Client) parseResponse(bodyResp []byte) (*dto.RecapReportDTO, error) {
 		return nil, fmt.Errorf("failed to parse Gemini report content: %w (raw: %s)", err, cleanJSON)
 	}
 
-	// Convert raw assignee responses to dto.AssigneeDTO
+	geminiRawReport.ReceiptSignatureDate = time.Now().Format("2006-01-02")
+
 	assignees := make([]dto.AssigneeDTO, 0, len(geminiRawReport.Assignees))
 	for _, rawAssignee := range geminiRawReport.Assignees {
 		transactionsDTO := make([]dto.TransactionDTO, 0, len(rawAssignee.Transactions))
@@ -228,7 +267,6 @@ func (c *Client) cleanJSON(s string) string {
 	return strings.TrimSpace(s)
 }
 
-// Internal types for JSON parsing
 type geminiResponse struct {
 	Candidates []struct {
 		Content struct {
@@ -239,7 +277,6 @@ type geminiResponse struct {
 	} `json:"candidates"`
 }
 
-// geminiReportResponse represents the full report structure from Gemini API
 type geminiReportResponse struct {
 	StartDate            string                `json:"startDate"`
 	EndDate              string                `json:"endDate"`
