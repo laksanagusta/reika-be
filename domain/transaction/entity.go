@@ -4,7 +4,6 @@ import (
 	"strings"
 )
 
-// TransactionType represents the type of transaction
 type TransactionType string
 
 const (
@@ -13,7 +12,6 @@ const (
 	TransactionTypeOther         TransactionType = "other"
 )
 
-// Transaction represents a business transaction entity
 type Transaction struct {
 	Name            string
 	TxType          TransactionType
@@ -28,9 +26,7 @@ type Transaction struct {
 	Rank            string
 }
 
-// NewTransaction creates a new transaction (validation is handled in handler layer)
 func NewTransaction(name, txType, subtype string, amount, subtotal int32, totalNight *int32, description string, transportDetail string, employeeID, position, rank string) (*Transaction, error) {
-	// Normalize transaction type - this is business logic, not validation
 	validType := TransactionType(strings.ToLower(txType))
 	if !isValidTransactionType(validType) {
 		validType = TransactionTypeOther
@@ -96,7 +92,6 @@ func (t *Transaction) GetRank() string {
 	return t.Rank
 }
 
-// Business logic methods
 func (t *Transaction) IsAccommodation() bool {
 	return t.TxType == TransactionTypeAccommodation
 }

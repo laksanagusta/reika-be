@@ -19,7 +19,6 @@ func NewCreateMeetingUseCase(meetingService *meeting.Service) *CreateMeetingUseC
 }
 
 func (uc *CreateMeetingUseCase) Execute(ctx context.Context, req dto.CreateMeetingRequest) (*dto.CreateMeetingResponse, error) {
-	// Convert to domain (validation is now handled in handler layer)
 	meetingEntity, err := req.ToDomain()
 	if err != nil {
 		return &dto.CreateMeetingResponse{
@@ -28,7 +27,6 @@ func (uc *CreateMeetingUseCase) Execute(ctx context.Context, req dto.CreateMeeti
 		}, nil
 	}
 
-	// Create meeting
 	result, err := uc.meetingService.CreateMeeting(ctx, *meetingEntity)
 	if err != nil {
 		return &dto.CreateMeetingResponse{
